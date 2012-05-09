@@ -1,15 +1,16 @@
 #include <math.h>
 #include <gsl/gsl_sf_bessel.h>
 #include <QtDebug>
+
 #include "ConvKernel.h"
 
-GriddingKernel::GriddingKernel(float kWidth,  int overGridFactor, int length)
+ConvKernel::ConvKernel(float kWidth,  int overGridFactor, int length)
     : m_kWidth(kWidth), m_ogFactor(overGridFactor), m_length(length)
 {
 
 }
 
-QVector<float> GriddingKernel::GetKernelData()
+QVector<float> ConvKernel::GetKernelData()
 {
     if (m_kernelData.isEmpty()) {
         m_kernelData.resize(m_length);
@@ -30,7 +31,7 @@ QVector<float> GriddingKernel::GetKernelData()
             if (i == 0) kernel0 = m_kernelData[0];
             m_kernelData[i] /= kernel0;
 
-            qWarning() << "x = " << x << "k[" << i << "] = " << m_kernelData[i];
+            // qWarning() << "x =" << x << "k[" << i << "] =" << m_kernelData[i];
         }
     }
 
