@@ -1,4 +1,4 @@
-#include "GriddingKernel.h"
+#include "ConvKernel.h"
 
 int main(int argc, char *argv[])
 {

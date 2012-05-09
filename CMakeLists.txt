@@ -12,11 +12,12 @@ include(${QT_USE_FILE})
 
 set(SRC_FILES
     GriddingMain.cpp
-    GriddingKernel.cpp
+    ConvKernel.cpp
+    GridLut.cpp
 )
 
 # include_directories(${GSL_INCLUDE_DIRS})
 # link_directories(${GSL_INCLUDE_DIRS})
 
 add_executable(gridding ${SRC_FILES})
-target_link_libraries(gridding ${QT_LIBRARIES} gsl)
+target_link_libraries(gridding ${QT_LIBRARIES} gsl blas)

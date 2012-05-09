@@ -5,11 +5,11 @@
 class GriddingKernel
 {
 public:
-    GriddingKernel(int kWidth, int overGridFactor, int length = 32);
-    void GetKernelData();
+    GriddingKernel(float kWidth, int overGridFactor, int length = 32);
+    QVector<float> GetKernelData();
 
 private:
-    int m_kWidth;
+    float m_kWidth;
     int m_ogFactor;
     const int m_length;
 
