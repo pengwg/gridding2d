@@ -4,13 +4,19 @@ cmake_minimum_required(VERSION 2.6.0)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-find_package(Qt4 COMPONENTS QtCore REQUIRED)
+find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 include(${QT_USE_FILE})
 
+# set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+# find_package(GSL REQUIRED)
+
 set(SRC_FILES
+    GriddingMain.cpp
+    GriddingKernel.cpp
 )
 
-# include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+# include_directories(${GSL_INCLUDE_DIRS})
+# link_directories(${GSL_INCLUDE_DIRS})
 
-add_executable(gridding2d ${SRC_FILES})
-target_link_libraries(gridding2d ${QT_LIBRARIES})
+add_executable(gridding ${SRC_FILES})
+target_link_libraries(gridding ${QT_LIBRARIES} gsl)
