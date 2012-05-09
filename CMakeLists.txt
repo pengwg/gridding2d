@@ -2,6 +2,8 @@ project(Gridding2D)
 
 cmake_minimum_required(VERSION 2.6.0)
 
+add_definitions( -std=c++0x )
+
 set(CMAKE_BUILD_TYPE Debug)
 
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)

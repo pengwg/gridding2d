@@ -51,10 +51,14 @@ int main(int argc, char *argv[])
 
     int kWidth = 4;
     int overGridFactor = 2;
-
     ConvKernel kernel(kWidth, overGridFactor);
-    GridLut grid;
+
+    int gridSize = 234 * overGridFactor;
+    complexVector gDataSet(gridSize * gridSize);
+
+    GridLut grid(gridSize);
     grid.SetConvKernel(kernel);
+    grid.Gridding(kDataSet, gDataSet);
 
     return 0;
 }

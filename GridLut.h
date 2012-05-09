@@ -13,16 +13,20 @@ typedef struct
     float dcf;
 } kData;
 
+typedef QVector< std::complex<float> > complexVector;
+
 
 
 class GridLut
 {
 public:
-    GridLut();
+    GridLut(int gridSize);
     void SetConvKernel(ConvKernel &kernel);
+    void Gridding(QVector<kData> &dataSet, complexVector &gDataSet);
 
 private:
     ConvKernel m_kernel;
+    int m_gridSize;
 };
 
 #endif // GRIDLUT_H

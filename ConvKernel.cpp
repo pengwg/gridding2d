@@ -4,7 +4,7 @@
 
 #include "ConvKernel.h"
 
-ConvKernel::ConvKernel(float kWidth,  int overGridFactor, int length)
+ConvKernel::ConvKernel(float kWidth,  float overGridFactor, int length)
     : m_kWidth(kWidth), m_ogFactor(overGridFactor), m_length(length)
 {
 
@@ -36,4 +36,10 @@ QVector<float> ConvKernel::GetKernelData()
     }
 
     return m_kernelData;
+}
+
+
+float ConvKernel::GetKernelWidth()
+{
+    return m_kWidth;
 }
