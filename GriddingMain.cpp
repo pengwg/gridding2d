@@ -16,8 +16,11 @@ void loadData(QVector<kData> & kDataSet, int kSize)
     file.open(QIODevice::ReadOnly);
 
     QVector<float> buffer(kSize * 3);
+
     qint64 size = sizeof(float) * kSize * 3;
-    Q_ASSERT(file.read((char *)buffer.data(), size) == size);
+    auto count = file.read((char *)buffer.data(), size);
+    Q_ASSERT(count == size);
+
     file.close();
 
     float *pdata = buffer.data();
@@ -30,8 +33,11 @@ void loadData(QVector<kData> & kDataSet, int kSize)
 
     file.setFileName("liver.0.data");
     file.open(QIODevice::ReadOnly);
+
     size = sizeof(float) * kSize * 2;
-    Q_ASSERT(file.read((char *)buffer.data(), size) == size);
+    count = file.read((char *)buffer.data(), size);
+    Q_ASSERT(count == size);
+
     file.close();
 
     pdata = buffer.data();
@@ -107,7 +113,7 @@ int main(int argc, char *argv[])
     grid.setConvKernel(kernel);
     grid.gridding(kDataSet, gDataSet);
 
-    displayData(gridSize, gridSize, gDataSet, "k-space");
+    // displayData(gridSize, gridSize, gDataSet, "k-space");
 
     FFT2D fft(gridSize, gridSize, false);
     fft.fftShift(gDataSet);
