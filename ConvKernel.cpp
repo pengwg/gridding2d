@@ -10,7 +10,7 @@ ConvKernel::ConvKernel(float kWidth,  float overGridFactor, int length)
 
 }
 
-QVector<float> ConvKernel::GetKernelData()
+QVector<float> ConvKernel::getKernelData()
 {
     if (m_kernelData.isEmpty()) {
         m_kernelData.resize(m_length);
@@ -39,7 +39,7 @@ QVector<float> ConvKernel::GetKernelData()
 }
 
 
-float ConvKernel::GetKernelWidth()
+float ConvKernel::getKernelWidth()
 {
     return m_kWidth;
 }

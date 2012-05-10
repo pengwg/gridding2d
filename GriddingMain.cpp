@@ -2,11 +2,15 @@
 #include <QDir>
 #include <QFile>
 #include <QDebug>
+#include <QtGui>
+
+#include <float.h>
 
 #include "ConvKernel.h"
 #include "GridLut.h"
+#include "FFT2D.h"
 
-void LoadData(QVector<kData> & kDataSet, int kSize)
+void loadData(QVector<kData> & kDataSet, int kSize)
 {
     QFile file("liver.trj");
     file.open(QIODevice::ReadOnly);
@@ -39,14 +43,58 @@ void LoadData(QVector<kData> & kDataSet, int kSize)
 
 
 
+void displayData(int n0, int n1, const complexVector & data, const QString & title)
+{
+    QVector<float> dataValue;
+
+    float max = 0;
+    float min = FLT_MAX;
+
+    for (auto cValue : data) {
+        float value = std::abs(cValue);
+        if (value > max) max = value;
+        if (value < min) min = value;
+
+        dataValue << value;
+    }
+
+    QImage dataImage(n1, n0, QImage::Format_Indexed8);
+    for (int i = 0; i < 256; i++) {
+        dataImage.setColor(i, qRgb(i, i, i));
+    }
+
+    int i = 0;
+    for (int y = 0; y < n0; y++) {
+        auto imageLine = dataImage.scanLine(y);
+
+        for (int x = 0; x < n1; x++) {
+            uint idx = (dataValue[i] - min) / (max - min) * 255;
+            imageLine[x] = idx;
+            i++;
+        }
+    }
+
+    QPixmap pixmap = QPixmap::fromImage(dataImage);
+
+    QLabel *imgWnd = new QLabel;
+    imgWnd->setWindowTitle(title);
+    imgWnd->setPixmap(pixmap);
+    imgWnd->show();
+}
+
+
+
+
 int main(int argc, char *argv[])
 {
+    QApplication app(argc, argv);
+
     int samples = 2250;
     int arms = 16;
     QDir::setCurrent("../k-export-liver/");
 
     QVector<kData> kDataSet(samples * arms);
-    LoadData(kDataSet, samples * arms);
+    loadData(kDataSet, samples * arms);
 
     int kWidth = 4;
     int overGridFactor = 2;
@@ -56,8 +104,17 @@ int main(int argc, char *argv[])
     complexVector gDataSet(gridSize * gridSize);
 
     GridLut grid(gridSize);
-    grid.SetConvKernel(kernel);
-    grid.Gridding(kDataSet, gDataSet);
+    grid.setConvKernel(kernel);
+    grid.gridding(kDataSet, gDataSet);
 
-    return 0;
+    displayData(gridSize, gridSize, gDataSet, "k-space");
+
+    FFT2D fft(gridSize, gridSize, false);
+    fft.fftShift(gDataSet);
+    fft.excute(gDataSet);
+    fft.fftShift(gDataSet);
+
+    displayData(gridSize, gridSize, gDataSet, "image");
+
+    return app.exec();
 }

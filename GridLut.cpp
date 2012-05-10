@@ -5,15 +5,15 @@ GridLut::GridLut(int gridSize)
     m_gridSize = gridSize;
 }
 
-void GridLut::SetConvKernel(ConvKernel &kernel)
+void GridLut::setConvKernel(ConvKernel &kernel)
 {
     m_kernel = kernel;
 }
 
-void GridLut::Gridding(QVector<kData> &kDataSet, complexVector &gDataSet)
+void GridLut::gridding(QVector<kData> &kDataSet, complexVector &gDataSet)
 {
-    float kHW = m_kernel.GetKernelWidth() / 2;
-    QVector<float> kernelData = m_kernel.GetKernelData();
+    float kHW = m_kernel.getKernelWidth() / 2;
+    QVector<float> kernelData = m_kernel.getKernelData();
     int klength = kernelData.size();
 
     for (auto kdat : kDataSet) {

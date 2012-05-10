@@ -7,15 +7,20 @@
 
 typedef QVector< std::complex<float> > complexVector;
 
+
 class FFT2D
 {
 public:
     FFT2D(int n0, int n1, bool forward);
     ~FFT2D();
 
-    void Excute(complexVector &data);
+    void excute(complexVector & data);
+    void fftShift(complexVector & data);
 
 private:
+    const int m_n0;
+    const int m_n1;
+
     fftwf_plan m_plan;
     fftwf_complex *m_in;
 };
