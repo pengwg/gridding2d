@@ -2,7 +2,9 @@
 #include <QDir>
 #include <QFile>
 #include <QDebug>
-#include <QtGui>
+#include <QtGui/QApplication>
+#include <QLabel>
+#include <QElapsedTimer>
 
 #include <float.h>
 
@@ -49,7 +51,7 @@ void loadData(QVector<kData> & kDataSet, int kSize)
 
 
 
-void displayData(int n0, int n1, const complexVector & data, const QString & title)
+void displayData(int n0, int n1, const complexVector& data, const QString& title)
 {
     QVector<float> dataValue;
 
@@ -82,7 +84,7 @@ void displayData(int n0, int n1, const complexVector & data, const QString & tit
 
     QPixmap pixmap = QPixmap::fromImage(dataImage);
 
-    QLabel *imgWnd = new QLabel;
+    QLabel *imgWnd = new QLabel("Image Window");
     imgWnd->setWindowTitle(title);
     imgWnd->setPixmap(pixmap);
     imgWnd->show();
@@ -90,11 +92,8 @@ void displayData(int n0, int n1, const complexVector & data, const QString & tit
 
 
 
-
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
-
     int samples = 2250;
     int arms = 16;
     QDir::setCurrent("../k-export-liver/");
@@ -111,15 +110,22 @@ int main(int argc, char *argv[])
 
     GridLut grid(gridSize);
     grid.setConvKernel(kernel);
-    grid.gridding(kDataSet, gDataSet);
-
-    // displayData(gridSize, gridSize, gDataSet, "k-space");
 
     FFT2D fft(gridSize, gridSize, false);
+
+    QElapsedTimer timer;
+    timer.start();
+
+    grid.gridding(kDataSet, gDataSet);
+    // displayData(gridSize, gridSize, gDataSet, "k-space");
+
     fft.fftShift(gDataSet);
     fft.excute(gDataSet);
     fft.fftShift(gDataSet);
 
+    qWarning() << "Core process time =" << timer.elapsed() << "ms";
+
+    QApplication app(argc, argv);
     displayData(gridSize, gridSize, gDataSet, "image");
 
     return app.exec();
