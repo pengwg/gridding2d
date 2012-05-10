@@ -1,7 +1,6 @@
 #include <QString>
 #include <QDir>
 #include <QFile>
-#include <QByteArray>
 #include <QDebug>
 
 #include "ConvKernel.h"
