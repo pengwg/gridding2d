@@ -21,11 +21,13 @@ class GridLut
 {
 public:
     GridLut(int gridSize);
+    ~GridLut();
+
     void setConvKernel(ConvKernel &kernel);
     void gridding(QVector<kData> &dataSet, complexVector &gDataSet);
 
 private:
-    ConvKernel m_kernel;
+    ConvKernel *m_kernel;
     int m_gridSize;
 };
 

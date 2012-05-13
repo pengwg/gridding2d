@@ -1,19 +1,37 @@
+#include <QDebug>
+
 #include "GridLut.h"
 
 GridLut::GridLut(int gridSize)
+    : m_gridSize(gridSize), m_kernel(nullptr)
 {
-    m_gridSize = gridSize;
+
+}
+
+GridLut::~GridLut()
+{
+    if (m_kernel) {
+        delete m_kernel;
+    }
 }
 
 void GridLut::setConvKernel(ConvKernel &kernel)
 {
-    m_kernel = kernel;
+    if (!m_kernel)
+        m_kernel = new ConvKernel(kernel);
+    else
+        *m_kernel = kernel;
 }
 
 void GridLut::gridding(QVector<kData> &kDataSet, complexVector &gDataSet)
 {
-    float kHW = m_kernel.getKernelWidth() / 2;
-    QVector<float> kernelData = m_kernel.getKernelData();
+    if (!m_kernel) {
+        qWarning() << "Kernel not set. Skip Gridding.";
+        return;
+    }
+
+    float kHW = m_kernel->getKernelWidth() / 2;
+    QVector<float> kernelData = m_kernel->getKernelData();
     int klength = kernelData.size();
 
     for (auto kdat : kDataSet) {
