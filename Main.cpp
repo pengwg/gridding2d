@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
     int kWidth = 4;
     int overGridFactor = 2;
-    ConvKernel kernel(kWidth, overGridFactor);
+    ConvKernel kernel(kWidth, overGridFactor, 256);
 
     int gridSize = 234 * overGridFactor;
     complexVector gDataSet(gridSize * gridSize);

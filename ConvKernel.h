@@ -6,7 +6,7 @@
 class ConvKernel
 {
 public:
-    ConvKernel(float kWidth = 2, float overGridFactor = 2, int length = 32);
+    ConvKernel(float kWidth, float overGridFactor, int length = 32);
     QVector<float> getKernelData();
     float getKernelWidth();
 
