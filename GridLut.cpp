@@ -2,25 +2,11 @@
 
 #include "GridLut.h"
 
+
 GridLut::GridLut(int gridSize)
-    : m_gridSize(gridSize), m_kernel(nullptr)
+    : Grid(gridSize)
 {
 
-}
-
-GridLut::~GridLut()
-{
-    if (m_kernel) {
-        delete m_kernel;
-    }
-}
-
-void GridLut::setConvKernel(ConvKernel &kernel)
-{
-    if (!m_kernel)
-        m_kernel = new ConvKernel(kernel);
-    else
-        *m_kernel = kernel;
 }
 
 void GridLut::gridding(QVector<kData> &kDataSet, complexVector &gDataSet)

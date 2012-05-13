@@ -14,8 +14,9 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(FFTW3 COMPONENTS single REQUIRED)
 
 set(SRC_FILES
-    GriddingMain.cpp
+    Main.cpp
     ConvKernel.cpp
+    Grid.cpp
     GridLut.cpp
     FFT2D.cpp
 )
