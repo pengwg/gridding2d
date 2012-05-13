@@ -13,7 +13,6 @@ public:
 private:
     float m_kWidth;
     float m_ogFactor;
-    int m_length;
 
     QVector<float> m_kernelData;
 };
