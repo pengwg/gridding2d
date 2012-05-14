@@ -10,6 +10,7 @@
 
 #include "ConvKernel.h"
 #include "GridLut.h"
+#include "GridGpu.h"
 #include "FFT2D.h"
 
 void loadData(QVector<kData> & kDataSet, int kSize)
@@ -108,7 +109,7 @@ int main(int argc, char *argv[])
     int gridSize = 234 * overGridFactor;
     complexVector gDataSet(gridSize * gridSize);
 
-    GridLut grid(gridSize, kernel);
+    GridGpu grid(gridSize, kernel);
 
     FFT2D fft(gridSize, gridSize, false);
 
