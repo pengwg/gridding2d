@@ -2,7 +2,6 @@
 
 #include "GridGpu.h"
 
-
 GridGpu::GridGpu(int gridSize, ConvKernel &kernel)
     : Grid(gridSize, kernel), m_threadsPerBlock(256), m_gpuGridSize(8)
 {
@@ -65,11 +64,10 @@ void GridGpu::prepare(QVector<kData> &dataSet)
         if (uby == blockY + 1 && uby < m_gpuGridSize)
             dataPartition[uby * m_gpuGridSize + blockX].append(kdat);
     }
-    qWarning() << dataPartition.size();
     int maxP = 0;
 
     for (auto dataP : dataPartition) {
         if (dataP.size() > maxP) maxP = dataP.size();
-        qWarning() << "Partiion size:" << dataP.size();
+        // qWarning() << "Partition size:" << dataP.size();
     }
 }

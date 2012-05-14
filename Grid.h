@@ -2,10 +2,11 @@
 #define GRID_H
 
 #include <complex>
+#include <cuda_runtime.h>
 
 #include "ConvKernel.h"
 
-typedef struct
+typedef struct __align__(16)
 {
     float kx;
     float ky;
