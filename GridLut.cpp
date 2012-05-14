@@ -3,21 +3,16 @@
 #include "GridLut.h"
 
 
-GridLut::GridLut(int gridSize)
-    : Grid(gridSize)
+GridLut::GridLut(int gridSize, ConvKernel &kernel)
+    : Grid(gridSize, kernel)
 {
 
 }
 
 void GridLut::gridding(QVector<kData> &kDataSet, complexVector &gDataSet)
 {
-    if (!m_kernel) {
-        qWarning() << "Kernel not set. Skip Gridding.";
-        return;
-    }
-
-    float kHW = m_kernel->getKernelWidth() / 2;
-    QVector<float> kernelData = m_kernel->getKernelData();
+    float kHW = m_kernel.getKernelWidth() / 2;
+    QVector<float> kernelData = m_kernel.getKernelData();
     int klength = kernelData.size();
 
     for (auto kdat : kDataSet) {

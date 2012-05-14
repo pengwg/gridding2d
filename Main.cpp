@@ -108,8 +108,7 @@ int main(int argc, char *argv[])
     int gridSize = 234 * overGridFactor;
     complexVector gDataSet(gridSize * gridSize);
 
-    GridLut grid(gridSize);
-    grid.setConvKernel(kernel);
+    GridLut grid(gridSize, kernel);
 
     FFT2D fft(gridSize, gridSize, false);
 

@@ -20,14 +20,13 @@ typedef QVector< std::complex<float> > complexVector;
 class Grid
 {
 public:
-    Grid(int gridSize);
+    Grid(int gridSize, ConvKernel &kernel);
     ~Grid();
 
-    void setConvKernel(ConvKernel &kernel);
     virtual void gridding(QVector<kData> &dataSet, complexVector &gDataSet) = 0;
 
 protected:
-    ConvKernel *m_kernel;
+    ConvKernel m_kernel;
     int m_gridSize;
 };
 
