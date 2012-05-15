@@ -12,16 +12,78 @@ int gpuGridSize;
 
 
 TrajGpu devTraj;
-float *devKData;
-float *devGData;
+complexGpu *devKData;
+complexGpu *devGData;
 
 
 __constant__ float Kernel[256];
 
 
-__global__ void griddingKernel(float *devKDataSet, float *devGDataSet, int gridSize)
+__global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu *devGData, int gridSize)
 {
-    devGDataSet[0] = 1;
+    int blockWidth = ceilf((float)gridSize / gridDim.x);
+    int blockHeight = ceilf((float)gridSize / gridDim.y);
+
+    int blockStartX = blockWidth * gridDim.x;
+    int blockEndX = blockStartX + blockWidth;
+    if (blockEndX > gridSize) blockEndX = gridSize;
+
+    int blockStartY = blockWidth * gridDim.y;
+    int blockEndY = blockStartY + blockWidth;
+    if (blockEndY > gridSize) blockEndY = gridSize;
+
+    extern __shared__ complexGpu local_block[];
+
+    int blockSize = blockWidth * blockHeight;
+    for (int i = threadIdx.x; i < blockSize; i += blockDim.x) {
+        local_block[i].real = 0;
+        local_block[i].imag = 0;
+    }
+    __syncthreads();
+
+    int kHW = 2;
+    int klength = 256;
+
+    int blockID = blockIdx.y * gridDim.x + blockIdx.x;
+    kTraj *pTraj = (kTraj *)((char *)devTraj.trajData + devTraj.pitchTraj * blockID);
+
+    for (int i = threadIdx.x; i < devTraj.trajWidth; i += blockDim.x) {
+        float xCenter = (0.5f + pTraj[i].kx) * gridSize; // kx in (-0.5, 0.5)
+        int xStart = ceilf(xCenter - kHW);
+        int xEnd = floorf(xCenter + kHW);
+
+        float yCenter = (0.5f + pTraj[i].ky) * gridSize; // ky in (-0.5, 0.5)
+        int yStart = ceilf(yCenter - kHW);
+        int yEnd = floorf(yCenter + kHW);
+
+        if (xStart < 0) xStart = 0;
+        if (xEnd > gridSize - 1) xEnd = gridSize - 1;
+
+        if (yStart < 0) yStart = 0;
+        if (yEnd > gridSize - 1) yEnd = gridSize - 1;
+
+
+        int n = (yStart - blockStartY) * blockWidth + xStart - blockStartX;
+        int dn = blockWidth - (xEnd - xStart) - 1;
+
+        for (int y = yStart; y <= yEnd; y++) {
+            float dy = y - yCenter;
+
+            for (int x = xStart; x <= xEnd; x++) {
+                float dx = x - xCenter;
+                float dk = sqrt(dy * dy + dx * dx);
+
+                if (dk < kHW) {
+                    int ki = roundf(dk / kHW * (klength - 1));
+                    local_block[n].real += Kernel[ki] * devKData[pTraj[i].idx].real * pTraj[i].dcf;
+                    local_block[n].imag += Kernel[ki] * devKData[pTraj[i].idx].imag * pTraj[i].dcf;
+                }
+                n++;
+            }
+            n += dn;
+        }
+    }
+
 }
 
 cudaError_t copyKernel(const QVector<float> &kernelData)
@@ -45,6 +107,7 @@ cudaError_t copyTraj(const QVector< QVector<kTraj> > &trajPartition)
     devTraj.trajWidth = maxP;
 
     cudaMallocPitch(&devTraj.trajData, &devTraj.pitchTraj, maxP * sizeof(kTraj), trajPartition.size());
+    cudaMemset(devTraj.trajData, 0, devTraj.pitchTraj * trajPartition.size());
     qWarning() << "Partition pitch:" << devTraj.pitchTraj;
 
     for (int i = 0; i < trajPartition.size(); i++) {
@@ -58,8 +121,8 @@ cudaError_t copyTraj(const QVector< QVector<kTraj> > &trajPartition)
 cudaError_t mallocGpu(int kSize, int gSize)
 {
     // Malloc k-space and gridding matrix data
-    cudaMalloc(&devKData, kSize * sizeof(float));
-    cudaMalloc(&devGData, gSize * sizeof(float));
+    cudaMalloc(&devKData, kSize * sizeof(complexGpu));
+    cudaMalloc(&devGData, gSize * sizeof(complexGpu));
 
     return cudaGetLastError();
 }
@@ -67,11 +130,13 @@ cudaError_t mallocGpu(int kSize, int gSize)
 cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize)
 {
     qWarning() << "In gridding GPU";
-    cudaMemcpy(devKData, kData.data(), kData.size() * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devKData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
 
     dim3 GridSize(gpuGridSize, gpuGridSize);
-    griddingKernel<<<GridSize, threadsPerBlock>>>(devKData, devGData, gridSize);
+    int sharedSize = powf(ceilf((float)gridSize / gpuGridSize), 2) * sizeof(complexGpu);
+    qWarning() << " Shared mem size:" << sharedSize;
+    griddingKernel<<<GridSize, threadsPerBlock, sharedSize>>>(devTraj, devKData, devGData, gridSize);
 
-    cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(complexGpu), cudaMemcpyDeviceToHost);
     return cudaGetLastError();
 }
