@@ -56,12 +56,11 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
         int yStart = ceilf(yCenter - kHW);
         int yEnd = floorf(yCenter + kHW);
 
-        if (xStart < 0) xStart = 0;
-        if (xEnd > gridSize - 1) xEnd = gridSize - 1;
+        if (xStart < blockStartX) xStart = blockStartX;
+        if (xEnd > blockEndX - 1) xEnd = blockEndX - 1;
 
-        if (yStart < 0) yStart = 0;
-        if (yEnd > gridSize - 1) yEnd = gridSize - 1;
-
+        if (yStart < blockStartY) yStart = blockStartY;
+        if (yEnd > blockEndY - 1) yEnd = blockEndY - 1;
 
         int n = (yStart - blockStartY) * blockWidth + xStart - blockStartX;
         int dn = blockWidth - (xEnd - xStart) - 1;
@@ -76,13 +75,26 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
                 float dk = sqrt(dy * dy + dx * dx);
 
                 if (dk < kHW) {
-                    int ki = roundf(dk / kHW * (klength - 1));
+                    int ki = rintf(dk / kHW * (klength - 1));
                     local_block[n].real += Kernel[ki] * pTraj[i].dcf * data.real;
                     local_block[n].imag += Kernel[ki] * pTraj[i].dcf * data.imag;
                 }
                 n++;
             }
             n += dn;
+        }
+    }
+
+    __syncthreads();
+
+    for (int i = threadIdx.x; i < blockSize; i += blockDim.x) {
+        int x = i % blockWidth + blockStartX;
+        int y = i / blockWidth + blockStartY;
+
+        if (x < blockEndX && y < blockEndY) {
+            int idx = y  * gridSize + x;
+            devGData[idx].real = local_block[i].real;
+            devGData[idx].imag = local_block[i].imag;
         }
     }
 
