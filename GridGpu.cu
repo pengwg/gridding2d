@@ -24,12 +24,12 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
     int blockWidth = ceilf((float)gridSize / gridDim.x);
     int blockHeight = ceilf((float)gridSize / gridDim.y);
 
-    int blockStartX = blockWidth * gridDim.x;
+    int blockStartX = blockWidth * blockIdx.x;
     int blockEndX = blockStartX + blockWidth;
     if (blockEndX > gridSize) blockEndX = gridSize;
 
-    int blockStartY = blockWidth * gridDim.y;
-    int blockEndY = blockStartY + blockWidth;
+    int blockStartY = blockHeight * blockIdx.y;
+    int blockEndY = blockStartY + blockHeight;
     if (blockEndY > gridSize) blockEndY = gridSize;
 
     extern __shared__ complexGpu local_block[];
@@ -87,10 +87,10 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
     __syncthreads();
 
+
     for (int i = threadIdx.x; i < blockSize; i += blockDim.x) {
         int x = i % blockWidth + blockStartX;
         int y = i / blockWidth + blockStartY;
-
         if (x < blockEndX && y < blockEndY) {
             int idx = y  * gridSize + x;
             devGData[idx].real = local_block[i].real;
@@ -145,11 +145,15 @@ cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize
 {
     cudaMemcpy(devKData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
 
-    dim3 GridSize(gpuGridSize, gpuGridSize);
     int sharedSize = powf(ceilf((float)gridSize / gpuGridSize), 2) * sizeof(complexGpu);
     qWarning() << " Shared mem size:" << sharedSize;
+
+    dim3 GridSize(gpuGridSize, gpuGridSize);
     griddingKernel<<<GridSize, threadsPerBlock, sharedSize>>>(devTraj, devKData, devGData, gridSize);
 
     cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(complexGpu), cudaMemcpyDeviceToHost);
+    std::complex<float> *p = gData.data();
+    int a = p[0].real();
+
     return cudaGetLastError();
 }
