@@ -19,4 +19,7 @@ private:
     const int m_gpuGridSize;
 };
 
+cudaError_t copyDataGpu(const QVector<float> &kernelData, const QVector< QVector<kData> > &dataPartition);
+cudaError_t griddingGpu();
+
 #endif // GRIDGPU_H

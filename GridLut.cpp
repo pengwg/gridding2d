@@ -15,7 +15,7 @@ void GridLut::gridding(QVector<kData> &kDataSet, complexVector &gDataSet)
     QVector<float> kernelData = m_kernel.getKernelData();
     int klength = kernelData.size();
 
-    for (auto kdat : kDataSet) {
+    for (auto &kdat : kDataSet) {
         float xCenter = (0.5 + kdat.kx) * m_gridSize; // kx in (-0.5, 0.5)
         int xStart = ceil(xCenter - kHW);
         int xEnd = floor(xCenter + kHW);

@@ -21,6 +21,7 @@ set(SRC_FILES
     Grid.cpp
     GridLut.cpp
     GridGpu.cpp
+    GridGpu.cu
     FFT2D.cpp
 )
 

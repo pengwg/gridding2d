@@ -28,7 +28,7 @@ void GridGpu::prepare(QVector<kData> &dataSet)
     QVector< QVector<kData> > dataPartition(m_gpuGridSize * m_gpuGridSize);
     float kHW = m_kernel.getKernelWidth() / 2 / m_gridSize;
 
-    for (auto kdat : dataSet) {
+    for (auto &kdat : dataSet) {
         int blockX = (kdat.kx + 0.5) / kBlockSize;
         Q_ASSERT(blockX < m_gpuGridSize);
 
@@ -64,10 +64,6 @@ void GridGpu::prepare(QVector<kData> &dataSet)
         if (uby == blockY + 1 && uby < m_gpuGridSize)
             dataPartition[uby * m_gpuGridSize + blockX].append(kdat);
     }
-    int maxP = 0;
 
-    for (auto dataP : dataPartition) {
-        if (dataP.size() > maxP) maxP = dataP.size();
-        // qWarning() << "Partition size:" << dataP.size();
-    }
+    copyDataGpu(m_kernel.getKernelData(), dataPartition);
 }
