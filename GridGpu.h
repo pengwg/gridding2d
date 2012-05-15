@@ -3,23 +3,27 @@
 
 #include "Grid.h"
 
+typedef struct {
+    kTraj*  trajData;
+    size_t pitchTraj;
+    int trajWidth;
+} TrajGpu;
+
 
 class GridGpu : public Grid
 {
 public:
     GridGpu(int gridSize, ConvKernel &kernel);
+    ~GridGpu();
 
-    void gridding(QVector<kData> &dataSet, complexVector &gDataSet);
-    void gridding(complexVector &gDataSet);
+    void gridding(QVector<kTraj> &trajData, complexVector &kData, complexVector &gData);
+    void gridding(complexVector &kData, complexVector &gData);
+    void prepare(QVector<kTraj> &trajData);
 
 private:
-    void prepare(QVector<kData> &dataSet);
-
     const int m_threadsPerBlock;
     const int m_gpuGridSize;
 };
 
-cudaError_t copyDataGpu(const QVector<float> &kernelData, const QVector< QVector<kData> > &dataPartition);
-cudaError_t griddingGpu();
 
 #endif // GRIDGPU_H

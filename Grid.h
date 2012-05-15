@@ -10,9 +10,9 @@ typedef struct __align__(16)
 {
     float kx;
     float ky;
-    std::complex<float> data;
     float dcf;
-} kData;
+    int idx;
+} kTraj;
 
 typedef QVector< std::complex<float> > complexVector;
 
@@ -24,7 +24,7 @@ public:
     Grid(int gridSize, ConvKernel &kernel);
     ~Grid();
 
-    virtual void gridding(QVector<kData> &dataSet, complexVector &gDataSet) = 0;
+    virtual void gridding(QVector<kTraj> &dataSet, complexVector &kDataSet, complexVector &gDataSet) = 0;
 
 protected:
     ConvKernel m_kernel;

@@ -13,7 +13,7 @@
 #include "GridGpu.h"
 #include "FFT2D.h"
 
-void loadData(QVector<kData> & kDataSet, int kSize)
+void loadData(QVector<kTraj> &trajData, complexVector &kData, int kSize)
 {
     QFile file("liver.trj");
     file.open(QIODevice::ReadOnly);
@@ -28,9 +28,10 @@ void loadData(QVector<kData> & kDataSet, int kSize)
 
     float *pdata = buffer.data();
     for (int i = 0; i < kSize; i++) {
-        kDataSet[i].kx = pdata[0];
-        kDataSet[i].ky = pdata[1];
-        kDataSet[i].dcf = pdata[2];
+        trajData[i].kx = pdata[0];
+        trajData[i].ky = pdata[1];
+        trajData[i].dcf = pdata[2];
+        trajData[i].idx = i;
         pdata += 3;
     }
 
@@ -45,7 +46,7 @@ void loadData(QVector<kData> & kDataSet, int kSize)
 
     pdata = buffer.data();
     for (int i = 0; i < kSize; i++) {
-        kDataSet[i].data = std::complex<float> (pdata[0], pdata[1]);
+        kData[i] = std::complex<float> (pdata[0], pdata[1]);
         pdata += 2;
     }
 }
@@ -99,8 +100,10 @@ int main(int argc, char *argv[])
     int arms = 16;
     QDir::setCurrent("../k-export-liver/");
 
-    QVector<kData> kDataSet(samples * arms);
-    loadData(kDataSet, samples * arms);
+    QVector<kTraj> trajData(samples * arms);
+    complexVector kData(samples * arms);
+
+    loadData(trajData, kData, samples * arms);
 
     int kWidth = 4;
     int overGridFactor = 2;
@@ -111,20 +114,20 @@ int main(int argc, char *argv[])
 
     // GridLut grid(gridSize, kernel);
     GridGpu grid(gridSize, kernel);
-
+    grid.prepare(trajData);
     FFT2D fft(gridSize, gridSize, false);
 
     QElapsedTimer timer;
     timer.start();
 
-    grid.gridding(kDataSet, gDataSet);
-    // displayData(gridSize, gridSize, gDataSet, "k-space");
+    grid.gridding(kData, gDataSet);
+
+    qWarning() << "Core process time =" << timer.elapsed() << "ms";
+
 
     fft.fftShift(gDataSet);
     fft.excute(gDataSet);
     fft.fftShift(gDataSet);
-
-    qWarning() << "Core process time =" << timer.elapsed() << "ms";
 
     QApplication app(argc, argv);
     displayData(gridSize, gridSize, gDataSet, "image");

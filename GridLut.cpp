@@ -9,13 +9,15 @@ GridLut::GridLut(int gridSize, ConvKernel &kernel)
 
 }
 
-void GridLut::gridding(QVector<kData> &kDataSet, complexVector &gDataSet)
+void GridLut::gridding(QVector<kTraj> &kTrajSet, complexVector &kDataSet, complexVector &gDataSet)
 {
     float kHW = m_kernel.getKernelWidth() / 2;
     QVector<float> kernelData = m_kernel.getKernelData();
     int klength = kernelData.size();
 
-    for (auto &kdat : kDataSet) {
+    int iData = 0;
+
+    for (auto &kdat : kTrajSet) {
         float xCenter = (0.5 + kdat.kx) * m_gridSize; // kx in (-0.5, 0.5)
         int xStart = ceil(xCenter - kHW);
         int xEnd = floor(xCenter + kHW);
@@ -43,12 +45,12 @@ void GridLut::gridding(QVector<kData> &kDataSet, complexVector &gDataSet)
 
                 if (dk < kHW) {
                     int ki = round(dk / kHW * (klength - 1));
-                    gDataSet[i] += kernelData[ki] * kdat.data * kdat.dcf;
+                    gDataSet[i] += kernelData[ki] * kDataSet[iData] * kdat.dcf;
                 }
                 i++;
             }
             i += di;
         }
-
+        iData++;
     }
 }
