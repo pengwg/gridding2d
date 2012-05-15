@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     int gridSize = 234 * overGridFactor;
     complexVector gData(gridSize * gridSize);
 
-    // GridLut grid(gridSize, kernel);
+    //GridLut grid(gridSize, kernel);
     GridGpu grid(gridSize, kernel);
     grid.prepare(trajData);
     FFT2D fft(gridSize, gridSize, false);
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     timer.start();
 
     grid.gridding(kData, gData);
-    // grid.gridding(trajData, kData, gData);
+    //grid.gridding(trajData, kData, gData);
 
     qWarning() << "Core process time =" << timer.elapsed() << "ms";
 

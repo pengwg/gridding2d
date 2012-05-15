@@ -66,6 +66,8 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
         int n = (yStart - blockStartY) * blockWidth + xStart - blockStartX;
         int dn = blockWidth - (xEnd - xStart) - 1;
 
+        complexGpu data = devKData[pTraj[i].idx];
+
         for (int y = yStart; y <= yEnd; y++) {
             float dy = y - yCenter;
 
@@ -75,8 +77,8 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
                 if (dk < kHW) {
                     int ki = roundf(dk / kHW * (klength - 1));
-                    local_block[n].real += Kernel[ki] * devKData[pTraj[i].idx].real * pTraj[i].dcf;
-                    local_block[n].imag += Kernel[ki] * devKData[pTraj[i].idx].imag * pTraj[i].dcf;
+                    local_block[n].real += Kernel[ki] * pTraj[i].dcf * data.real;
+                    local_block[n].imag += Kernel[ki] * pTraj[i].dcf * data.imag;
                 }
                 n++;
             }
@@ -129,7 +131,6 @@ cudaError_t mallocGpu(int kSize, int gSize)
 
 cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize)
 {
-    qWarning() << "In gridding GPU";
     cudaMemcpy(devKData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
 
     dim3 GridSize(gpuGridSize, gpuGridSize);
