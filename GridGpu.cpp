@@ -12,12 +12,12 @@ extern int threadsPerBlock;
 extern int gpuGridSize;
 
 extern TrajGpu devTraj;
-extern float *devKData;
-extern float *devGData;
+extern complexGpu *devKData;
+extern complexGpu *devGData;
 
 
 GridGpu::GridGpu(int gridSize, ConvKernel &kernel)
-    : Grid(gridSize, kernel), m_threadsPerBlock(256), m_gpuGridSize(8)
+    : Grid(gridSize, kernel), m_threadsPerBlock(256), m_gpuGridSize(16)
 {
     threadsPerBlock = m_threadsPerBlock;
     gpuGridSize = m_gpuGridSize;

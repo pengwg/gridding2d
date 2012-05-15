@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     ConvKernel kernel(kWidth, overGridFactor, 256);
 
     int gridSize = 234 * overGridFactor;
-    complexVector gDataSet(gridSize * gridSize);
+    complexVector gData(gridSize * gridSize);
 
     // GridLut grid(gridSize, kernel);
     GridGpu grid(gridSize, kernel);
@@ -120,17 +120,18 @@ int main(int argc, char *argv[])
     QElapsedTimer timer;
     timer.start();
 
-    grid.gridding(kData, gDataSet);
+    grid.gridding(kData, gData);
+    // grid.gridding(trajData, kData, gData);
 
     qWarning() << "Core process time =" << timer.elapsed() << "ms";
 
 
-    fft.fftShift(gDataSet);
-    fft.excute(gDataSet);
-    fft.fftShift(gDataSet);
+    /*fft.fftShift(gData);
+    fft.excute(gData);
+    fft.fftShift(gData);*/
 
     QApplication app(argc, argv);
-    displayData(gridSize, gridSize, gDataSet, "image");
+    displayData(gridSize, gridSize, gData, "image");
 
     return app.exec();
 }

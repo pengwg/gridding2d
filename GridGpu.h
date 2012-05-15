@@ -9,6 +9,10 @@ typedef struct {
     int trajWidth;
 } TrajGpu;
 
+typedef struct __align__(8) {
+    float real;
+    float imag;
+} complexGpu;
 
 class GridGpu : public Grid
 {

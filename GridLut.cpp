@@ -26,7 +26,7 @@ void GridLut::gridding(QVector<kTraj> &kTrajSet, complexVector &kDataSet, comple
         int yStart = ceil(yCenter  - kHW);
         int yEnd = floor(yCenter + kHW);
 
-        yStart = fmax(yStart, 0);
+        xStart = fmax(xStart, 0);
         xEnd = fmin(xEnd, m_gridSize - 1);
 
         yStart = fmax(yStart, 0);
