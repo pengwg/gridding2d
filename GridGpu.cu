@@ -2,6 +2,7 @@
 #include <QDebug>
 
 #include <cuda_runtime.h>
+#include "stdio.h"
 
 #include "Grid.h"
 #include "GridGpu.h"
@@ -77,20 +78,22 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
                 if (dk < kHW) {
                     int ki = rintf(dk / kHW * (klength - 1));
-                    local_block[n].real += Kernel[ki] * pTraj[i].dcf * data.real;
-                    local_block[n].imag += Kernel[ki] * pTraj[i].dcf * data.imag;
-                    //atomicAdd(&local_block[n].real, Kernel[ki] * pTraj[i].dcf * data.real);
-                    //atomicAdd(&local_block[n].imag, Kernel[ki] * pTraj[i].dcf * data.imag);
+                    //local_block[n].real = 10;
+                    //local_block[n].real = 10;
+                    //local_block[n].real += Kernel[ki] * pTraj[i].dcf * data.real;
+                    //local_block[n].imag += Kernel[ki] * pTraj[i].dcf * data.imag;
+                    if (blockIdx.x == 7 && blockIdx.y == 8 && n == 26)
+                        printf("Block %d - i = %d\n", blockID, pTraj[i].idx);
+                    atomicAdd(&local_block[n].real, Kernel[ki] * pTraj[i].dcf * data.real);
+                    atomicAdd(&local_block[n].imag, Kernel[ki] * pTraj[i].dcf * data.imag);
                 }
                 n++;
             }
             n += dn;
         }
-        __syncthreads();
     }
 
     __syncthreads();
-
 
     for (int i = threadIdx.x; i < blockSize; i += blockDim.x) {
         int x = i % blockWidth + blockStartX;
@@ -99,6 +102,8 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
             int idx = y  * gridSize + x;
             devGData[idx].real = local_block[i].real;
             devGData[idx].imag = local_block[i].imag;
+            if (x == 236 && y == 240)
+                devGData[0].real = local_block[26].real;
         }
     }
 }
@@ -155,8 +160,8 @@ cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize
     griddingKernel<<<GridSize, threadsPerBlock, sharedSize>>>(devTraj, devKData, devGData, gridSize);
 
     cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(complexGpu), cudaMemcpyDeviceToHost);
-    //std::complex<float> *p = gData.data();
-    // qWarning() << p[0].real() << p[0].imag();
+    std::complex<float> *p = gData.data();
+    qWarning() << p[0].real() << p[0].imag();
 
     return cudaGetLastError();
 }

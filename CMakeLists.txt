@@ -27,5 +27,6 @@ set(SRC_FILES
 
 include_directories(${FFTW3_INCLUDE_DIR})
 
+set(CUDA_NVCC_FLAGS -arch=compute_20)
 cuda_add_executable(gridding ${SRC_FILES})
 target_link_libraries(gridding ${QT_LIBRARIES} gsl blas ${FFTW3_LIBRARIES})

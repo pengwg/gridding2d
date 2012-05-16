@@ -78,7 +78,11 @@ void displayData(int n0, int n1, const complexVector& data, const QString& title
         auto imageLine = dataImage.scanLine(y);
 
         for (int x = 0; x < n1; x++) {
-            uint idx = (dataValue[i] - min) / (max - min) * 255;
+            uint idx;
+            if (max == min)
+                idx = 127;
+            else
+                idx = (dataValue[i] - min) / (max - min) * 255;
             imageLine[x] = idx;
             i++;
         }

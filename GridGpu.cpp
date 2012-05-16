@@ -68,8 +68,10 @@ void GridGpu::prepare(QVector<kTraj> &trajData)
 
         if (lbx == blockX - 1 && lbx >= 0) {
             trajPartition[blockY * m_gpuGridSize + lbx].append(traj);
-            if (lby == blockY - 1 && lby >= 0)
+            if (lby == blockY - 1 && lby >= 0) {
                 trajPartition[lby * m_gpuGridSize + lbx].append(traj);
+                // qWarning() << traj.kx << traj.ky;
+            }
             if (uby == blockY + 1 && uby < m_gpuGridSize)
                 trajPartition[uby * m_gpuGridSize + lbx].append(traj);
         }
