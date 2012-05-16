@@ -42,7 +42,7 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
     }
     __syncthreads();
 
-    int kHW = 2;
+    float kHW = 2;
     int klength = 256;
 
     int blockID = blockIdx.y * gridDim.x + blockIdx.x;

@@ -127,7 +127,6 @@ int main(int argc, char *argv[])
         gridCpu.gridding(trajData, kData, gData);
     qWarning() << "CPU run time =" << timer.restart() << "ms";
 
-    timer.start();
     for (int i = 0; i < 10; i++)
         gridGpu.gridding(kData, gData);
     qWarning() << "GPU run time =" << timer.elapsed() << "ms";
