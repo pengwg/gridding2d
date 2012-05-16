@@ -68,20 +68,23 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
         int dn = blockWidth - (xEnd - xStart) - 1;
 
         complexGpu data = devKData[pTraj[i].idx];
+        float dcf = pTraj[i].dcf;
+        float dataReal = dcf * data.real;
+        float dataImag = dcf * data.imag;
 
         for (int y = yStart; y <= yEnd; y++) {
             float dy = y - yCenter;
 
             for (int x = xStart; x <= xEnd; x++) {
                 float dx = x - xCenter;
-                float dk = sqrt(dy * dy + dx * dx);
+                float dk = sqrtf(dy * dy + dx * dx);
 
                 if (dk < kHW) {
                     int ki = rintf(dk / kHW * (klength - 1));
-                    //local_block[n].real += Kernel[ki] * pTraj[i].dcf * data.real;
-                    //local_block[n].imag += Kernel[ki] * pTraj[i].dcf * data.imag;
-                    atomicAdd(&local_block[n].real, Kernel[ki] * pTraj[i].dcf * data.real);
-                    atomicAdd(&local_block[n].imag, Kernel[ki] * pTraj[i].dcf * data.imag);
+                    //local_block[n].real += Kernel[ki] * dataReal;
+                    //local_block[n].imag += Kernel[ki] * dataImag;
+                    atomicAdd(&local_block[n].real, Kernel[ki] * dataReal);
+                    atomicAdd(&local_block[n].imag, Kernel[ki] * dataImag);
                 }
                 n++;
             }

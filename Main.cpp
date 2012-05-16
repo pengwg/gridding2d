@@ -129,6 +129,7 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < 10; i++)
         gridGpu.gridding(kData, gData);
+    cudaDeviceSynchronize();
     qWarning() << "GPU run time =" << timer.elapsed() << "ms";
 
 
