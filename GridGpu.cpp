@@ -47,24 +47,24 @@ void GridGpu::gridding(complexVector &kData, complexVector &gData)
 
 void GridGpu::prepare(QVector<kTraj> &trajData)
 {
-    float kBlockSize = 1.0 / m_gpuGridSize;
+    float kBlockSize = ceilf((float)m_gridSize / m_gpuGridSize);
 
     QVector< QVector<kTraj> > trajPartition(m_gpuGridSize * m_gpuGridSize);
-    float kHW = m_kernel.getKernelWidth() / 2 / m_gridSize;
+    float kHW = m_kernel.getKernelWidth() / 2;
 
     for (auto &traj : trajData) {
-        int blockX = (traj.kx + 0.5) / kBlockSize;
+        int blockX = ((traj.kx + 0.5) * m_gridSize) / kBlockSize;
         Q_ASSERT(blockX < m_gpuGridSize);
 
-        int blockY = (traj.ky + 0.5) / kBlockSize;
+        int blockY = (traj.ky + 0.5) * m_gridSize / kBlockSize;
         Q_ASSERT(blockY < m_gpuGridSize);
 
         trajPartition[blockY * m_gpuGridSize + blockX].append(traj);
 
-        int lbx = (traj.kx + 0.5 - kHW) / kBlockSize;
-        int ubx = (traj.kx + 0.5 + kHW) / kBlockSize;
-        int lby = (traj.ky + 0.5 - kHW) / kBlockSize;
-        int uby = (traj.ky + 0.5 + kHW) / kBlockSize;
+        int lbx = ((traj.kx + 0.5) * m_gridSize - kHW) / kBlockSize;
+        int ubx = ((traj.kx + 0.5) * m_gridSize + kHW) / kBlockSize;
+        int lby = ((traj.ky + 0.5) * m_gridSize - kHW) / kBlockSize;
+        int uby = ((traj.ky + 0.5) * m_gridSize + kHW) / kBlockSize;
 
         if (lbx == blockX - 1 && lbx >= 0) {
             trajPartition[blockY * m_gpuGridSize + lbx].append(traj);
@@ -87,6 +87,8 @@ void GridGpu::prepare(QVector<kTraj> &trajData)
             trajPartition[lby * m_gpuGridSize + blockX].append(traj);
         if (uby == blockY + 1 && uby < m_gpuGridSize)
             trajPartition[uby * m_gpuGridSize + blockX].append(traj);
+        /*for (int i = 0; i < m_gpuGridSize * m_gpuGridSize; i++)
+            trajPartition[i].append(traj);*/
     }
 
     copyKernel(m_kernel.getKernelData());

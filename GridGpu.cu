@@ -63,6 +63,7 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
         if (yEnd > blockEndY - 1) yEnd = blockEndY - 1;
 
         int n = (yStart - blockStartY) * blockWidth + xStart - blockStartX;
+
         int dn = blockWidth - (xEnd - xStart) - 1;
 
         complexGpu data = devKData[pTraj[i].idx];
@@ -78,11 +79,14 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
                     int ki = rintf(dk / kHW * (klength - 1));
                     local_block[n].real += Kernel[ki] * pTraj[i].dcf * data.real;
                     local_block[n].imag += Kernel[ki] * pTraj[i].dcf * data.imag;
+                    //atomicAdd(&local_block[n].real, Kernel[ki] * pTraj[i].dcf * data.real);
+                    //atomicAdd(&local_block[n].imag, Kernel[ki] * pTraj[i].dcf * data.imag);
                 }
                 n++;
             }
             n += dn;
         }
+        __syncthreads();
     }
 
     __syncthreads();
@@ -97,7 +101,6 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
             devGData[idx].imag = local_block[i].imag;
         }
     }
-
 }
 
 cudaError_t copyKernel(const QVector<float> &kernelData)
@@ -152,8 +155,8 @@ cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize
     griddingKernel<<<GridSize, threadsPerBlock, sharedSize>>>(devTraj, devKData, devGData, gridSize);
 
     cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(complexGpu), cudaMemcpyDeviceToHost);
-    std::complex<float> *p = gData.data();
-    int a = p[0].real();
+    //std::complex<float> *p = gData.data();
+    // qWarning() << p[0].real() << p[0].imag();
 
     return cudaGetLastError();
 }
