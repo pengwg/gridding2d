@@ -123,11 +123,11 @@ int main(int argc, char *argv[])
 
     QElapsedTimer timer;
     timer.start();
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 50; i++)
         gridCpu.gridding(trajData, kData, gData);
     qWarning() << "CPU run time =" << timer.restart() << "ms";
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 50; i++)
         gridGpu.gridding(kData, gData);
     cudaDeviceSynchronize();
     qWarning() << "GPU run time =" << timer.elapsed() << "ms";

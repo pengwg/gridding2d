@@ -74,10 +74,11 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
         for (int y = yStart; y <= yEnd; y++) {
             float dy = y - yCenter;
+            float dy2 = dy * dy;
 
             for (int x = xStart; x <= xEnd; x++) {
                 float dx = x - xCenter;
-                float dk = sqrtf(dy * dy + dx * dx);
+                float dk = sqrtf(dy2 + dx * dx);
 
                 if (dk < kHW) {
                     int ki = rintf(dk / kHW * (klength - 1));
@@ -155,7 +156,7 @@ cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize
     dim3 GridSize(gpuGridSize, gpuGridSize);
     griddingKernel<<<GridSize, threadsPerBlock, sharedSize>>>(devTraj, devKData, devGData, gridSize);
 
-    cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(complexGpu), cudaMemcpyDeviceToHost);
+    //cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(complexGpu), cudaMemcpyDeviceToHost);
     //std::complex<float> *p = gData.data();
     //qWarning() << p[0].real() << p[0].imag();
 
