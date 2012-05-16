@@ -15,7 +15,7 @@ int gpuGridSize;
 TrajGpu devTraj;
 complexGpu *devKData;
 complexGpu *devGData;
-
+int sharedSize;
 
 __constant__ float Kernel[256];
 
@@ -78,12 +78,8 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
                 if (dk < kHW) {
                     int ki = rintf(dk / kHW * (klength - 1));
-                    //local_block[n].real = 10;
-                    //local_block[n].real = 10;
                     //local_block[n].real += Kernel[ki] * pTraj[i].dcf * data.real;
                     //local_block[n].imag += Kernel[ki] * pTraj[i].dcf * data.imag;
-                    if (blockIdx.x == 7 && blockIdx.y == 8 && n == 26)
-                        printf("Block %d - i = %d\n", blockID, pTraj[i].idx);
                     atomicAdd(&local_block[n].real, Kernel[ki] * pTraj[i].dcf * data.real);
                     atomicAdd(&local_block[n].imag, Kernel[ki] * pTraj[i].dcf * data.imag);
                 }
@@ -102,8 +98,6 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
             int idx = y  * gridSize + x;
             devGData[idx].real = local_block[i].real;
             devGData[idx].imag = local_block[i].imag;
-            if (x == 236 && y == 240)
-                devGData[0].real = local_block[26].real;
         }
     }
 }
@@ -153,15 +147,14 @@ cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize
 {
     cudaMemcpy(devKData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
 
-    int sharedSize = powf(ceilf((float)gridSize / gpuGridSize), 2) * sizeof(complexGpu);
-    qWarning() << " Shared mem size:" << sharedSize;
+    // qWarning() << " Shared mem size:" << sharedSize;
 
     dim3 GridSize(gpuGridSize, gpuGridSize);
     griddingKernel<<<GridSize, threadsPerBlock, sharedSize>>>(devTraj, devKData, devGData, gridSize);
 
     cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(complexGpu), cudaMemcpyDeviceToHost);
-    std::complex<float> *p = gData.data();
-    qWarning() << p[0].real() << p[0].imag();
+    //std::complex<float> *p = gData.data();
+    //qWarning() << p[0].real() << p[0].imag();
 
     return cudaGetLastError();
 }

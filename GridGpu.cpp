@@ -14,7 +14,7 @@ extern int gpuGridSize;
 extern TrajGpu devTraj;
 extern complexGpu *devKData;
 extern complexGpu *devGData;
-
+extern int sharedSize;
 
 GridGpu::GridGpu(int gridSize, ConvKernel &kernel)
     : Grid(gridSize, kernel), m_threadsPerBlock(256), m_gpuGridSize(16)
@@ -76,7 +76,6 @@ void GridGpu::prepare(QVector<kTraj> &trajData)
                 trajPartition[uby * m_gpuGridSize + lbx].append(traj);
         }
 
-
         if (ubx == blockX + 1 && ubx < m_gpuGridSize) {
             trajPartition[blockY * m_gpuGridSize + ubx].append(traj);
             if (lby == blockY - 1 && lby >= 0)
@@ -96,6 +95,8 @@ void GridGpu::prepare(QVector<kTraj> &trajData)
     copyKernel(m_kernel.getKernelData());
     copyTraj(trajPartition);
     mallocGpu(trajData.size(), m_gridSize * m_gridSize);
+
+    sharedSize = powf(ceilf((float)m_gridSize / m_gpuGridSize), 2) * sizeof(complexGpu);
 
     cudaError_t status = cudaGetLastError();
     if (status != cudaSuccess)

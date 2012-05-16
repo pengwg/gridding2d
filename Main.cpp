@@ -116,23 +116,26 @@ int main(int argc, char *argv[])
     int gridSize = 234 * overGridFactor;
     complexVector gData(gridSize * gridSize);
 
-    //GridLut grid(gridSize, kernel);
-    GridGpu grid(gridSize, kernel);
-    grid.prepare(trajData);
+    GridLut gridCpu(gridSize, kernel);
+    GridGpu gridGpu(gridSize, kernel);
+    gridGpu.prepare(trajData);
     FFT2D fft(gridSize, gridSize, false);
 
     QElapsedTimer timer;
     timer.start();
+    for (int i = 0; i < 10; i++)
+        gridCpu.gridding(trajData, kData, gData);
+    qWarning() << "CPU run time =" << timer.restart() << "ms";
 
-    grid.gridding(kData, gData);
-    //grid.gridding(trajData, kData, gData);
+    timer.start();
+    for (int i = 0; i < 10; i++)
+        gridGpu.gridding(kData, gData);
+    qWarning() << "GPU run time =" << timer.elapsed() << "ms";
 
-    qWarning() << "Core process time =" << timer.elapsed() << "ms";
 
-
-    /*fft.fftShift(gData);
+    fft.fftShift(gData);
     fft.excute(gData);
-    fft.fftShift(gData);*/
+    fft.fftShift(gData);
 
     QApplication app(argc, argv);
     displayData(gridSize, gridSize, gData, "image");
