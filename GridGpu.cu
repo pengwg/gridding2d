@@ -49,11 +49,14 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
     kTraj *pTraj = (kTraj *)((char *)devTraj.trajData + devTraj.pitchTraj * blockID);
 
     for (int i = threadIdx.x; i < devTraj.trajWidth; i += blockDim.x) {
-        float xCenter = (0.5f + pTraj[i].kx) * gridSize; // kx in (-0.5, 0.5)
+        kTraj traj = pTraj[i];
+        if (traj.dcf == 0) break;
+
+        float xCenter = (0.5f + traj.kx) * gridSize; // kx in (-0.5, 0.5)
         int xStart = ceilf(xCenter - kHW);
         int xEnd = floorf(xCenter + kHW);
 
-        float yCenter = (0.5f + pTraj[i].ky) * gridSize; // ky in (-0.5, 0.5)
+        float yCenter = (0.5f + traj.ky) * gridSize; // ky in (-0.5, 0.5)
         int yStart = ceilf(yCenter - kHW);
         int yEnd = floorf(yCenter + kHW);
 
@@ -67,10 +70,10 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
         int dn = blockWidth - (xEnd - xStart) - 1;
 
-        complexGpu data = devKData[pTraj[i].idx];
-        float dcf = pTraj[i].dcf;
-        float dataReal = dcf * data.real;
-        float dataImag = dcf * data.imag;
+        complexGpu data = devKData[traj.idx];
+
+        float dataReal = traj.dcf * data.real;
+        float dataImag = traj.dcf * data.imag;
 
         for (int y = yStart; y <= yEnd; y++) {
             float dy = y - yCenter;
