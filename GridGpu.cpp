@@ -97,6 +97,7 @@ void GridGpu::prepare(QVector<kTraj> &trajData)
     mallocGpu(trajData.size(), m_gridSize * m_gridSize);
 
     sharedSize = powf(ceilf((float)m_gridSize / m_gpuGridSize), 2) * sizeof(complexGpu);
+    qWarning() << "Shared mem size:" << sharedSize;
 
     cudaError_t status = cudaGetLastError();
     if (status != cudaSuccess)

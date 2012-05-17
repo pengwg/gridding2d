@@ -121,25 +121,36 @@ int main(int argc, char *argv[])
     gridGpu.prepare(trajData);
     FFT2D fft(gridSize, gridSize, false);
 
+    int rep = 10;
+    qWarning() << "\nIteration" << rep << 'x';
+
     QElapsedTimer timer;
     timer.start();
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < rep; i++)
         gridCpu.gridding(trajData, kData, gData);
-    qWarning() << "CPU run time =" << timer.restart() << "ms";
+    qWarning() << "CPU gridding time =" << timer.restart() << "ms";
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < rep; i++)
         gridGpu.gridding(kData, gData);
     cudaDeviceSynchronize();
-    qWarning() << "GPU run time =" << timer.restart() << "ms";
+    qWarning() << "GPU gridding time =" << timer.elapsed() << "ms";
 
     fft.fftShift(gData);
     fft.excute(gData);
     fft.fftShift(gData);
 
-    qWarning() << "FFT run time =" << timer.elapsed() << "ms";
-
     QApplication app(argc, argv);
     displayData(gridSize, gridSize, gData, "image");
+
+    timer.restart();
+
+    for (int i = 0; i < rep; i++) {
+        fft.fftShift(gData);
+        fft.excute(gData);
+        fft.fftShift(gData);
+    }
+
+    qWarning() << "CPU FFT time =" << timer.elapsed() << "ms";
 
     return app.exec();
 }

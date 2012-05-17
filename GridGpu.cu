@@ -154,8 +154,6 @@ cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize
 {
     cudaMemcpy(devKData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
 
-    // qWarning() << " Shared mem size:" << sharedSize;
-
     dim3 GridSize(gpuGridSize, gpuGridSize);
     griddingKernel<<<GridSize, threadsPerBlock, sharedSize>>>(devTraj, devKData, devGData, gridSize);
 
