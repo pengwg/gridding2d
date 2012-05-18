@@ -11,6 +11,8 @@ GridLut::GridLut(int gridSize, ConvKernel &kernel)
 
 void GridLut::gridding(QVector<kTraj> &kTrajSet, complexVector &kDataSet, complexVector &gDataSet)
 {
+    gDataSet.resize(m_gridSize * m_gridSize);
+
     float kHW = m_kernel.getKernelWidth() / 2;
     QVector<float> kernelData = m_kernel.getKernelData();
     int klength = kernelData.size();

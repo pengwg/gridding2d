@@ -8,14 +8,7 @@
 #include "GridGpu.h"
 
 
-int threadsPerBlock;
-int gpuGridSize;
 
-
-TrajGpu devTraj;
-complexGpu *devKData;
-complexGpu *devGData;
-int sharedSize;
 
 __constant__ float Kernel[256];
 
@@ -85,8 +78,8 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
                 if (dk < kHW) {
                     int ki = rintf(dk / kHW * (klength - 1));
-                    //local_block[n].real += Kernel[ki] * dataReal;
-                    //local_block[n].imag += Kernel[ki] * dataImag;
+                    // local_block[n].real += Kernel[ki] * dataReal;
+                    // local_block[n].imag += Kernel[ki] * dataImag;
                     atomicAdd(&local_block[n].real, Kernel[ki] * dataReal);
                     atomicAdd(&local_block[n].imag, Kernel[ki] * dataImag);
                 }
@@ -109,8 +102,10 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
     }
 }
 
-cudaError_t copyKernel(const QVector<float> &kernelData)
+
+cudaError_t GridGpu::copyKernelData()
 {
+    QVector<float> kernelData = m_kernel.getKernelData();
     Q_ASSERT(kernelData.size() == 256);
     // Copy gridding kernel data
     cudaMemcpyToSymbol(Kernel, kernelData.data(), kernelData.size() * sizeof(float));
@@ -119,45 +114,13 @@ cudaError_t copyKernel(const QVector<float> &kernelData)
 }
 
 
-cudaError_t copyTraj(const QVector< QVector<kTraj> > &trajPartition)
+cudaError_t GridGpu::kernelCall(complexVector &kData)
 {
-    // Copy gridding k-trajectory data
-    int maxP = 0;
-    for (int i = 0; i < trajPartition.size(); i++) {
-        if (trajPartition[i].size() > maxP) maxP = trajPartition[i].size();
-        // qWarning() << "Partition" << i << trajPartition[i].size();
-    }
-    devTraj.trajWidth = maxP;
+    cudaMemcpy(m_d_kData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
 
-    cudaMallocPitch(&devTraj.trajData, &devTraj.pitchTraj, maxP * sizeof(kTraj), trajPartition.size());
-    cudaMemset(devTraj.trajData, 0, devTraj.pitchTraj * trajPartition.size());
-    qWarning() << "Partition pitch:" << devTraj.pitchTraj;
+    dim3 GridSize(m_gpuGridSize, m_gpuGridSize);
+    griddingKernel<<<GridSize, m_threadsPerBlock, m_sharedSize>>>(m_d_Traj, m_d_kData, m_d_gData, m_gridSize);
 
-    for (int i = 0; i < trajPartition.size(); i++) {
-        char *row = (char *)devTraj.trajData + i * devTraj.pitchTraj;
-        cudaMemcpy(row, trajPartition[i].data(), trajPartition[i].size() * sizeof(kTraj), cudaMemcpyHostToDevice);
-    }
-
-    return cudaGetLastError();
-}
-
-cudaError_t mallocGpu(int kSize, int gSize)
-{
-    // Malloc k-space and gridding matrix data
-    cudaMalloc(&devKData, kSize * sizeof(complexGpu));
-    cudaMalloc(&devGData, gSize * sizeof(complexGpu));
-
-    return cudaGetLastError();
-}
-
-cudaError_t griddingGpu(complexVector &kData, complexVector &gData, int gridSize)
-{
-    cudaMemcpy(devKData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
-
-    dim3 GridSize(gpuGridSize, gpuGridSize);
-    griddingKernel<<<GridSize, threadsPerBlock, sharedSize>>>(devTraj, devKData, devGData, gridSize);
-
-    //cudaMemcpy(gData.data(), devGData, gData.size() * sizeof(complexGpu), cudaMemcpyDeviceToHost);
     //std::complex<float> *p = gData.data();
     //qWarning() << p[0].real() << p[0].imag();
 

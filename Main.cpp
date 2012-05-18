@@ -114,15 +114,18 @@ int main(int argc, char *argv[])
     ConvKernel kernel(kWidth, overGridFactor, 256);
 
     int gridSize = 234 * overGridFactor;
-    complexVector gData(gridSize * gridSize);
 
     GridLut gridCpu(gridSize, kernel);
+
     GridGpu gridGpu(gridSize, kernel);
-    gridGpu.prepare(trajData);
+    gridGpu.prepareGPU(trajData);
+
     FFT2D fft(gridSize, gridSize, false);
 
     int rep = 10;
     qWarning() << "\nIteration" << rep << 'x';
+
+    complexVector gData;
 
     QElapsedTimer timer;
     timer.start();
@@ -131,9 +134,11 @@ int main(int argc, char *argv[])
     qWarning() << "CPU gridding time =" << timer.restart() << "ms";
 
     for (int i = 0; i < rep; i++)
-        gridGpu.gridding(kData, gData);
+        gridGpu.gridding(kData);
     cudaDeviceSynchronize();
     qWarning() << "GPU gridding time =" << timer.elapsed() << "ms";
+
+    gridGpu.retrieveData(gData);
 
     fft.fftShift(gData);
     fft.excute(gData);
