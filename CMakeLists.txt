@@ -29,7 +29,6 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/GPU
 )
 
-set(CUDA_NVCC_FLAGS -arch=compute_20)
 
 add_subdirectory(GPU)
 add_executable(gridding ${SRC_FILES})

@@ -24,6 +24,7 @@ public:
     void gridding(complexVector &kData);
     cudaError_t prepareGPU(QVector<kTraj> &trajData);
     cudaError_t retrieveData(complexVector &gData);
+    complexGpu *getDevicePointer() { return m_d_gData; }
 
 private:
     void createTrajBlocks(QVector<kTraj> &trajData);

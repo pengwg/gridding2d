@@ -12,6 +12,7 @@
 #include "GridLut.h"
 #include "GridGpu.h"
 #include "FFT2D.h"
+#include "FFTGpu.h"
 
 void loadData(QVector<kTraj> &trajData, complexVector &kData, int kSize)
 {
@@ -115,24 +116,24 @@ int main(int argc, char *argv[])
 
     int gridSize = 234 * overGridFactor;
 
-    GridLut gridCpu(gridSize, kernel);
-
-    GridGpu gridGpu(gridSize, kernel);
-    gridGpu.prepareGPU(trajData);
-
-    FFT2D fft(gridSize, gridSize, false);
-
     int rep = 10;
     qWarning() << "\nIteration" << rep << 'x';
 
     complexVector gData;
-
     QElapsedTimer timer;
+
+    // CPU gridding
+    GridLut gridCpu(gridSize, kernel);
     timer.start();
     for (int i = 0; i < rep; i++)
         gridCpu.gridding(trajData, kData, gData);
-    qWarning() << "CPU gridding time =" << timer.restart() << "ms";
+    qWarning() << "CPU gridding time =" << timer.elapsed() << "ms";
 
+    // GPU gridding
+    GridGpu gridGpu(gridSize, kernel);
+    gridGpu.prepareGPU(trajData);
+
+    timer.restart();
     for (int i = 0; i < rep; i++)
         gridGpu.gridding(kData);
     cudaDeviceSynchronize();
@@ -140,6 +141,7 @@ int main(int argc, char *argv[])
 
     gridGpu.retrieveData(gData);
 
+    FFT2D fft(gridSize, gridSize, false);
     fft.fftShift(gData);
     fft.excute(gData);
     fft.fftShift(gData);
@@ -147,8 +149,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     displayData(gridSize, gridSize, gData, "image");
 
+    // CPU FFT
     timer.restart();
-
     for (int i = 0; i < rep; i++) {
         fft.fftShift(gData);
         fft.excute(gData);
@@ -156,6 +158,17 @@ int main(int argc, char *argv[])
     }
 
     qWarning() << "CPU FFT time =" << timer.elapsed() << "ms";
+
+    // GPU FFT
+    FFTGpu fftGpu(gridSize, gridSize);
+    timer.restart();
+    // for (int i = 0; i < rep; i++) {
+        fftGpu.Execute((cufftComplex *)gridGpu.getDevicePointer());
+
+    //}
+
+    qWarning() << "GPU FFT time =" << timer.elapsed() << "ms";
+
 
     return app.exec();
 }
