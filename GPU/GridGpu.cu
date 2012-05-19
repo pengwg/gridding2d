@@ -78,8 +78,8 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
                 if (dk < kHW) {
                     int ki = rintf(dk / kHW * (klength - 1));
-                    // local_block[n].real += Kernel[ki] * dataReal;
-                    // local_block[n].imag += Kernel[ki] * dataImag;
+                    //local_block[n].real += Kernel[ki] * dataReal;
+                    //local_block[n].imag += Kernel[ki] * dataImag;
                     atomicAdd(&local_block[n].real, Kernel[ki] * dataReal);
                     atomicAdd(&local_block[n].imag, Kernel[ki] * dataImag);
                 }

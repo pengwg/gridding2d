@@ -116,39 +116,31 @@ int main(int argc, char *argv[])
 
     int gridSize = 234 * overGridFactor;
 
-    int rep = 10;
-    qWarning() << "\nIteration" << rep << 'x';
-
     complexVector gData;
     QElapsedTimer timer;
+
+    GridGpu gridGpu(gridSize, kernel);
+    gridGpu.prepareGPU(trajData);
+
+    int rep = 10;
+    qWarning() << "\nIteration" << rep << 'x';
 
     // CPU gridding
     GridLut gridCpu(gridSize, kernel);
     timer.start();
     for (int i = 0; i < rep; i++)
         gridCpu.gridding(trajData, kData, gData);
-    qWarning() << "CPU gridding time =" << timer.elapsed() << "ms";
+    qWarning() << "\nCPU gridding time =" << timer.elapsed() << "ms";
 
     // GPU gridding
-    GridGpu gridGpu(gridSize, kernel);
-    gridGpu.prepareGPU(trajData);
 
     timer.restart();
     for (int i = 0; i < rep; i++)
         gridGpu.gridding(kData);
     cudaDeviceSynchronize();
-    qWarning() << "GPU gridding time =" << timer.elapsed() << "ms";
-
-    gridGpu.retrieveData(gData);
+    qWarning() << "\nGPU gridding time =" << timer.elapsed() << "ms";
 
     FFT2D fft(gridSize, gridSize, false);
-    fft.fftShift(gData);
-    fft.excute(gData);
-    fft.fftShift(gData);
-
-    QApplication app(argc, argv);
-    displayData(gridSize, gridSize, gData, "image");
-
     // CPU FFT
     timer.restart();
     for (int i = 0; i < rep; i++) {
@@ -157,18 +149,22 @@ int main(int argc, char *argv[])
         fft.fftShift(gData);
     }
 
-    qWarning() << "CPU FFT time =" << timer.elapsed() << "ms";
+    qWarning() << "\nCPU FFT time =" << timer.elapsed() << "ms";
 
     // GPU FFT
     FFTGpu fftGpu(gridSize, gridSize);
     timer.restart();
-    // for (int i = 0; i < rep; i++) {
+    for (int i = 0; i < rep; i++) {
         fftGpu.Execute((cufftComplex *)gridGpu.getDevicePointer());
+    }
+    cudaDeviceSynchronize();
+    qWarning() << "\nGPU FFT time =" << timer.elapsed() << "ms";
 
-    //}
-
-    qWarning() << "GPU FFT time =" << timer.elapsed() << "ms";
-
+    fftGpu.Execute((cufftComplex *)gridGpu.getDevicePointer());
+    fftGpu.retrieveData(gData);
+    fft.fftShift(gData);
+    QApplication app(argc, argv);
+    displayData(gridSize, gridSize, gData, "image");
 
     return app.exec();
 }
