@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 
     int gridSize = 234 * overGridFactor;
 
-    complexVector gData;
+    complexVector gDataCpu, gDataGpu;
     QElapsedTimer timer;
 
     GridGpu gridGpu(gridSize, kernel);
@@ -129,24 +129,24 @@ int main(int argc, char *argv[])
     GridLut gridCpu(gridSize, kernel);
     timer.start();
     for (int i = 0; i < rep; i++)
-        gridCpu.gridding(trajData, kData, gData);
+        gridCpu.gridding(trajData, kData, gDataCpu);
     qWarning() << "\nCPU gridding time =" << timer.elapsed() << "ms";
 
     // GPU gridding
-
     timer.restart();
     for (int i = 0; i < rep; i++)
         gridGpu.gridding(kData);
     cudaDeviceSynchronize();
     qWarning() << "\nGPU gridding time =" << timer.elapsed() << "ms";
+    gridGpu.retrieveData(gDataGpu);
 
-    FFT2D fft(gridSize, gridSize, false);
     // CPU FFT
+    FFT2D fft(gridSize, gridSize, false);
     timer.restart();
     for (int i = 0; i < rep; i++) {
-        fft.fftShift(gData);
-        fft.excute(gData);
-        fft.fftShift(gData);
+        fft.fftShift(gDataCpu);
+        fft.excute(gDataCpu);
+        fft.fftShift(gDataCpu);
     }
 
     qWarning() << "\nCPU FFT time =" << timer.elapsed() << "ms";
@@ -160,11 +160,13 @@ int main(int argc, char *argv[])
     cudaDeviceSynchronize();
     qWarning() << "\nGPU FFT time =" << timer.elapsed() << "ms";
 
-    fftGpu.Execute((cufftComplex *)gridGpu.getDevicePointer());
-    fftGpu.retrieveData(gData);
-    fft.fftShift(gData);
+
+    fft.fftShift(gDataGpu);
+    fft.excute(gDataGpu);
+    fft.fftShift(gDataGpu);
+
     QApplication app(argc, argv);
-    displayData(gridSize, gridSize, gData, "image");
+    displayData(gridSize, gridSize, gDataGpu, "image");
 
     return app.exec();
 }
