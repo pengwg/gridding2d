@@ -7,7 +7,7 @@ set(GRID_GPU_SRC_FILES
     FFTGpu.cpp
 )
 
-set(CUDA_NVCC_FLAGS -gencode;arch=compute_20,code=sm_20)
+set(CUDA_NVCC_FLAGS -gencode;arch=compute_20,code=sm_20;--ptxas-options=-v)
 cuda_add_library(gridGpu ${GRID_GPU_SRC_FILES} SHARED)
 
 target_link_libraries(gridGpu ${QT_LIBRARIES})
