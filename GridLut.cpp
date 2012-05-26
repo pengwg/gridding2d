@@ -17,7 +17,7 @@ void GridLut::gridding(QVector<kTraj> &trajData, complexVector &kData, complexVe
     QVector<float> kernelData = m_kernel.getKernelData();
     int klength = kernelData.size();
 
-    int iData = 0;
+    int idx = 0;
 
     for (auto &traj : trajData) {
         float xCenter = (0.5 + traj.kx) * m_gridSize; // kx in (-0.5, 0.5)
@@ -34,25 +34,27 @@ void GridLut::gridding(QVector<kTraj> &trajData, complexVector &kData, complexVe
         yStart = fmax(yStart, 0);
         yEnd = fmin(yEnd, m_gridSize - 1);
 
+        auto data = traj.dcf * kData[idx];
 
         int i = yStart * m_gridSize + xStart;
         int di = m_gridSize - (xEnd - xStart) - 1;
 
         for (int y = yStart; y <= yEnd; y++) {
             float dy = y - yCenter;
+            float dy2 = dy * dy;
 
             for (int x = xStart; x <= xEnd; x++) {
                 float dx = x - xCenter;
-                float dk = sqrt(dy * dy + dx * dx);
+                float dk = sqrtf(dy2 + dx * dx);
 
                 if (dk < kHW) {
                     int ki = round(dk / kHW * (klength - 1));
-                    gData[i] += kernelData[ki] * kData[iData] * traj.dcf;
+                    gData[i] += kernelData[ki] * data;
                 }
                 i++;
             }
             i += di;
         }
-        iData++;
+        idx++;
     }
 }

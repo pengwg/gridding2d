@@ -100,7 +100,7 @@ cudaError_t GridGpu::copyTrajBlocks()
 
     cudaMallocPitch(&m_d_traj.trajData, &m_d_traj.pitchTraj, maxP * sizeof(kTraj), m_trajBlocks.size());
     cudaMemset(m_d_traj.trajData, 0, m_d_traj.pitchTraj * m_trajBlocks.size());
-    qWarning() << "Partition pitch:" << m_d_traj.pitchTraj;
+    qWarning() << "Max traj points per block:" << maxP;
 
     for (int i = 0; i < m_trajBlocks.size(); i++) {
         char *row = (char *)m_d_traj.trajData + i * m_d_traj.pitchTraj;
