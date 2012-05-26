@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
     GridGpu gridGpu(gridSize, kernel);
     gridGpu.prepareGPU(trajData);
 
-    int rep = 10;
+    int rep = 100;
     qWarning() << "\nIteration" << rep << 'x';
 
     // CPU gridding
