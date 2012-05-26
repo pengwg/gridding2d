@@ -7,13 +7,13 @@ GridGpu::GridGpu(int gridSize, ConvKernel &kernel)
     : Grid(gridSize, kernel), m_threadsPerBlock(256), m_gpuGridSize(16),
       m_d_kData(nullptr), m_d_gData(nullptr), m_trajBlocks(m_gpuGridSize * m_gpuGridSize)
 {
-    m_d_Traj.trajData = nullptr;
+    m_d_traj.trajData = nullptr;
 }
 
 GridGpu::~GridGpu()
 {
-    if (m_d_Traj.trajData)
-        cudaFree(m_d_Traj.trajData);
+    if (m_d_traj.trajData)
+        cudaFree(m_d_traj.trajData);
 
     if (m_d_kData)
         cudaFree(m_d_kData);
@@ -96,14 +96,14 @@ cudaError_t GridGpu::copyTrajBlocks()
     for (int i = 0; i < m_trajBlocks.size(); i++) {
         if (m_trajBlocks[i].size() > maxP) maxP = m_trajBlocks[i].size();
     }
-    m_d_Traj.trajWidth = maxP;
+    m_d_traj.trajWidth = maxP;
 
-    cudaMallocPitch(&m_d_Traj.trajData, &m_d_Traj.pitchTraj, maxP * sizeof(kTraj), m_trajBlocks.size());
-    cudaMemset(m_d_Traj.trajData, 0, m_d_Traj.pitchTraj * m_trajBlocks.size());
-    qWarning() << "Partition pitch:" << m_d_Traj.pitchTraj;
+    cudaMallocPitch(&m_d_traj.trajData, &m_d_traj.pitchTraj, maxP * sizeof(kTraj), m_trajBlocks.size());
+    cudaMemset(m_d_traj.trajData, 0, m_d_traj.pitchTraj * m_trajBlocks.size());
+    qWarning() << "Partition pitch:" << m_d_traj.pitchTraj;
 
     for (int i = 0; i < m_trajBlocks.size(); i++) {
-        char *row = (char *)m_d_Traj.trajData + i * m_d_Traj.pitchTraj;
+        char *row = (char *)m_d_traj.trajData + i * m_d_traj.pitchTraj;
         cudaMemcpy(row, m_trajBlocks[i].data(), m_trajBlocks[i].size() * sizeof(kTraj), cudaMemcpyHostToDevice);
     }
 

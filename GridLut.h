@@ -9,7 +9,7 @@ class GridLut : public Grid
 public:
     GridLut(int gridSize, ConvKernel &kernel);
 
-    virtual void gridding(QVector<kTraj> &dataSet, complexVector &kDataSet, complexVector &gDataSet);
+    virtual void gridding(QVector<kTraj> &trajData, complexVector &kData, complexVector &gData);
 
 };
 

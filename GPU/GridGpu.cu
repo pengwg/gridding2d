@@ -13,7 +13,7 @@
 __constant__ float Kernel[256];
 
 
-__global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu *devGData, int gridSize)
+__global__ void griddingKernel(TrajGpu d_traj, complexGpu *d_kData, complexGpu *d_gData, int gridSize)
 {
     int blockWidth = ceilf((float)gridSize / gridDim.x);
     int blockHeight = ceilf((float)gridSize / gridDim.y);
@@ -39,9 +39,9 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
     int klength = 256;
 
     int blockID = blockIdx.y * gridDim.x + blockIdx.x;
-    kTraj *pTraj = (kTraj *)((char *)devTraj.trajData + devTraj.pitchTraj * blockID);
+    kTraj *pTraj = (kTraj *)((char *)d_traj.trajData + d_traj.pitchTraj * blockID);
 
-    for (int i = threadIdx.x; i < devTraj.trajWidth; i += blockDim.x) {
+    for (int i = threadIdx.x; i < d_traj.trajWidth; i += blockDim.x) {
         kTraj traj = pTraj[i];
         if (traj.dcf == 0) break;
 
@@ -63,7 +63,7 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
 
         int dn = blockWidth - (xEnd - xStart) - 1;
 
-        complexGpu data = devKData[traj.idx];
+        complexGpu data = d_kData[traj.idx];
 
         float dataReal = traj.dcf * data.real;
         float dataImag = traj.dcf * data.imag;
@@ -96,8 +96,8 @@ __global__ void griddingKernel(TrajGpu devTraj, complexGpu *devKData, complexGpu
         int y = i / blockWidth + blockStartY;
         if (x < blockEndX && y < blockEndY) {
             int idx = y  * gridSize + x;
-            devGData[idx].real = local_block[i].real;
-            devGData[idx].imag = local_block[i].imag;
+            d_gData[idx].real = local_block[i].real;
+            d_gData[idx].imag = local_block[i].imag;
         }
     }
 }
@@ -119,7 +119,7 @@ cudaError_t GridGpu::kernelCall(complexVector &kData)
     cudaMemcpy(m_d_kData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
 
     dim3 GridSize(m_gpuGridSize, m_gpuGridSize);
-    griddingKernel<<<GridSize, m_threadsPerBlock, m_sharedSize>>>(m_d_Traj, m_d_kData, m_d_gData, m_gridSize);
+    griddingKernel<<<GridSize, m_threadsPerBlock, m_sharedSize>>>(m_d_traj, m_d_kData, m_d_gData, m_gridSize);
 
     //std::complex<float> *p = gData.data();
     //qWarning() << p[0].real() << p[0].imag();

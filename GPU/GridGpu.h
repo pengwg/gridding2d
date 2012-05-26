@@ -38,7 +38,7 @@ private:
     QVector< QVector<kTraj> > m_trajBlocks;
     int m_kSize;
 
-    TrajGpu m_d_Traj;
+    TrajGpu m_d_traj;
     complexGpu *m_d_kData;
     complexGpu *m_d_gData;
     int m_sharedSize;
