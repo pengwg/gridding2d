@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     int overGridFactor = 2;
     ConvKernel kernel(kWidth, overGridFactor, 256);
 
-    int gridSize = 234 * overGridFactor;
+    int gridSize = 256 * overGridFactor;
 
     complexVector gDataCpu, gDataGpu;
     QElapsedTimer timer;
@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
     timer.restart();
     for (int i = 0; i < rep; i++)
         gridGpu.gridding(kData);
+
     cudaDeviceSynchronize();
     qWarning() << "\nGPU gridding time =" << timer.elapsed() << "ms";
     gridGpu.retrieveData(gDataGpu);
