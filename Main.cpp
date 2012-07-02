@@ -139,7 +139,11 @@ int main(int argc, char *argv[])
 
     cudaDeviceSynchronize();
     qWarning() << "\nGPU gridding time =" << timer.elapsed() << "ms";
-    gridGpu.retrieveData(gDataGpu);
+
+    timer.restart();
+    for (int i = 0; i < rep; i++)
+        gridGpu.retrieveData(gDataGpu);
+    qWarning() << "\nData retrive time =" << timer.elapsed() << "ms";
 
     // CPU FFT
     FFT2D fft(gridSize, gridSize, false);
