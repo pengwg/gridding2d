@@ -4,37 +4,37 @@
 
 
 GridGpu::GridGpu(int gridSize, ConvKernel &kernel)
-    : Grid(gridSize, kernel), m_threadsPerBlock(256), m_gpuGridSize(16),
-      m_d_kData(nullptr), m_d_gData(nullptr), m_trajBlocks(m_gpuGridSize * m_gpuGridSize)
+    : GridLut(gridSize, kernel), m_threadsPerBlock(256), m_gpuGridSize(16),
+      m_d_trajData(nullptr), m_d_gData(nullptr), m_trajBlocks(m_gpuGridSize * m_gpuGridSize)
 {
-    m_d_traj.trajData = nullptr;
+    m_d_traj.trajPoints = nullptr;
 }
 
 GridGpu::~GridGpu()
 {
-    if (m_d_traj.trajData)
-        cudaFree(m_d_traj.trajData);
+    if (m_d_traj.trajPoints)
+        cudaFree(m_d_traj.trajPoints);
 
-    if (m_d_kData)
-        cudaFree(m_d_kData);
+    if (m_d_trajData)
+        cudaFree(m_d_trajData);
 
     if (m_d_gData)
         cudaFree(m_d_gData);
 }
 
-void GridGpu::gridding(QVector<kTraj> &trajData, complexVector &kData, complexVector &gData)
+void GridGpu::gridding(QVector<Traj> &trajPoints, complexVector &trajData, complexVector &gData)
 {
-    prepareGPU(trajData);
-    gridding(kData);
+    prepareGPU(trajPoints);
+    gridding(trajData);
 }
 
 
-void GridGpu::gridding(complexVector &kData)
+void GridGpu::gridding(complexVector &trajData)
 {
-    if (kData.size() != m_kSize)
+    if (trajData.size() != m_kSize)
         qCritical() << "Size of k-space data not equal to the size of trajactory.";
 
-    transferData(kData);
+    transferData(trajData);
     cudaError_t status = kernelCall();
     if (status != cudaSuccess)
         qWarning() << cudaGetErrorString(status);
@@ -47,14 +47,14 @@ void GridGpu::gridding()
         qWarning() << cudaGetErrorString(status);
 }
 
-void GridGpu::createTrajBlocks(QVector<kTraj> &trajData)
+void GridGpu::createTrajBlocks(QVector<Traj> &trajPoints)
 {
     float kBlockSize = ceilf((float)m_gridSize / m_gpuGridSize);
 
     m_trajBlocks.resize(m_gpuGridSize * m_gpuGridSize);
     float kHW = m_kernel.getKernelWidth() / 2;
 
-    for (auto &traj : trajData) {
+    for (auto &traj : trajPoints) {
         int blockX = ((traj.kx + 0.5) * m_gridSize) / kBlockSize;
         Q_ASSERT(blockX < m_gpuGridSize);
 
@@ -92,7 +92,7 @@ void GridGpu::createTrajBlocks(QVector<kTraj> &trajData)
             m_trajBlocks[uby * m_gpuGridSize + blockX].append(traj);
     }
 
-    m_kSize = trajData.size();
+    m_kSize = trajPoints.size();
 }
 
 
@@ -105,13 +105,13 @@ cudaError_t GridGpu::copyTrajBlocks()
     }
     m_d_traj.trajWidth = maxP;
 
-    cudaMallocPitch(&m_d_traj.trajData, &m_d_traj.pitchTraj, maxP * sizeof(kTraj), m_trajBlocks.size());
-    cudaMemset(m_d_traj.trajData, 0, m_d_traj.pitchTraj * m_trajBlocks.size());
+    cudaMallocPitch(&m_d_traj.trajPoints, &m_d_traj.pitchTraj, maxP * sizeof(Traj), m_trajBlocks.size());
+    cudaMemset(m_d_traj.trajPoints, 0, m_d_traj.pitchTraj * m_trajBlocks.size());
     qWarning() << "Max traj points per block:" << maxP;
 
     for (int i = 0; i < m_trajBlocks.size(); i++) {
-        char *row = (char *)m_d_traj.trajData + i * m_d_traj.pitchTraj;
-        cudaMemcpy(row, m_trajBlocks[i].data(), m_trajBlocks[i].size() * sizeof(kTraj), cudaMemcpyHostToDevice);
+        char *row = (char *)m_d_traj.trajPoints + i * m_d_traj.pitchTraj;
+        cudaMemcpy(row, m_trajBlocks[i].data(), m_trajBlocks[i].size() * sizeof(Traj), cudaMemcpyHostToDevice);
     }
 
     return cudaGetLastError();
@@ -122,15 +122,15 @@ cudaError_t GridGpu::mallocGpu()
     int gSize = m_gridSize * m_gridSize;
 
     // Malloc k-space and gridding matrix data
-    cudaMalloc(&m_d_kData, m_kSize * sizeof(complexGpu));
+    cudaMalloc(&m_d_trajData, m_kSize * sizeof(complexGpu));
     cudaMalloc(&m_d_gData, gSize * sizeof(complexGpu));
 
     return cudaGetLastError();
 }
 
-cudaError_t GridGpu::prepareGPU(QVector<kTraj> &trajData)
+cudaError_t GridGpu::prepareGPU(QVector<Traj> &trajPoints)
 {
-    createTrajBlocks(trajData);
+    createTrajBlocks(trajPoints);
     copyKernelData();
     copyTrajBlocks();
     mallocGpu();
@@ -143,9 +143,9 @@ cudaError_t GridGpu::prepareGPU(QVector<kTraj> &trajData)
         qWarning() << cudaGetErrorString(status);
 }
 
-cudaError_t GridGpu::transferData(complexVector &kData)
+cudaError_t GridGpu::transferData(complexVector &trajData)
 {
-    cudaMemcpy(m_d_kData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
+    cudaMemcpy(m_d_trajData, trajData.data(), trajData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
     return cudaGetLastError();
 }
 

@@ -3,7 +3,7 @@
 
 #include <cufft.h>
 
-#include "Grid.h"
+#include "GridGpu.h"
 
 class FFTGpu
 {

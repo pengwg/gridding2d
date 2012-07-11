@@ -16,7 +16,6 @@ find_package(FFTW3 COMPONENTS single REQUIRED)
 set(SRC_FILES
     Main.cpp
     ConvKernel.cpp
-    Grid.cpp
     GridLut.cpp
     FFT2D.cpp
 )

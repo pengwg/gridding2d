@@ -4,12 +4,17 @@
 
 
 GridLut::GridLut(int gridSize, ConvKernel &kernel)
-    : Grid(gridSize, kernel)
+    : m_gridSize(gridSize), m_kernel(kernel)
 {
 
 }
 
-void GridLut::gridding(QVector<kTraj> &trajData, complexVector &kData, complexVector &gData)
+GridLut::~GridLut()
+{
+
+}
+
+void GridLut::gridding(QVector<Traj> &trajPoints, complexVector &trajData, complexVector &gData)
 {
     gData.resize(m_gridSize * m_gridSize);
 
@@ -19,7 +24,7 @@ void GridLut::gridding(QVector<kTraj> &trajData, complexVector &kData, complexVe
 
     int idx = 0;
 
-    for (auto &traj : trajData) {
+    for (auto &traj : trajPoints) {
         float xCenter = (0.5 + traj.kx) * m_gridSize; // kx in (-0.5, 0.5)
         int xStart = ceil(xCenter - kHW);
         int xEnd = floor(xCenter + kHW);
@@ -34,7 +39,7 @@ void GridLut::gridding(QVector<kTraj> &trajData, complexVector &kData, complexVe
         yStart = fmax(yStart, 0);
         yEnd = fmin(yEnd, m_gridSize - 1);
 
-        auto data = traj.dcf * kData[idx];
+        auto data = traj.dcf * trajData[idx];
 
         int i = yStart * m_gridSize + xStart;
         int di = m_gridSize - (xEnd - xStart) - 1;

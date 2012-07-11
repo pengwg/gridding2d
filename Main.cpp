@@ -14,7 +14,7 @@
 #include "FFT2D.h"
 #include "FFTGpu.h"
 
-void loadData(QVector<kTraj> &trajData, complexVector &kData, int kSize)
+void loadData(QVector<Traj> &trajData, complexVector &kData, int kSize)
 {
     QFile file("liver.trj");
     file.open(QIODevice::ReadOnly);
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     int arms = 16;
     QDir::setCurrent("../k-export-liver/");
 
-    QVector<kTraj> trajData(samples * arms);
+    QVector<Traj> trajData(samples * arms);
     complexVector kData(samples * arms);
 
     loadData(trajData, kData, samples * arms);
