@@ -22,7 +22,10 @@ public:
 
     void gridding(QVector<kTraj> &trajData, complexVector &kData, complexVector &gData);
     void gridding(complexVector &kData);
+    void gridding();
+
     cudaError_t prepareGPU(QVector<kTraj> &trajData);
+    cudaError_t transferData(complexVector &kData);
     cudaError_t retrieveData(complexVector &gData);
     complexGpu *getDevicePointer() { return m_d_gData; }
 
@@ -31,7 +34,7 @@ private:
     cudaError_t copyKernelData();
     cudaError_t copyTrajBlocks();
     cudaError_t mallocGpu();
-    cudaError_t kernelCall(complexVector &kData);
+    cudaError_t kernelCall();
 
     const int m_threadsPerBlock;
     const int m_gpuGridSize;

@@ -34,11 +34,18 @@ void GridGpu::gridding(complexVector &kData)
     if (kData.size() != m_kSize)
         qCritical() << "Size of k-space data not equal to the size of trajactory.";
 
-    cudaError_t status = kernelCall(kData);
+    transferData(kData);
+    cudaError_t status = kernelCall();
     if (status != cudaSuccess)
         qWarning() << cudaGetErrorString(status);
 }
 
+void GridGpu::gridding()
+{
+    cudaError_t status = kernelCall();
+    if (status != cudaSuccess)
+        qWarning() << cudaGetErrorString(status);
+}
 
 void GridGpu::createTrajBlocks(QVector<kTraj> &trajData)
 {
@@ -134,6 +141,12 @@ cudaError_t GridGpu::prepareGPU(QVector<kTraj> &trajData)
     cudaError_t status = cudaGetLastError();
     if (status != cudaSuccess)
         qWarning() << cudaGetErrorString(status);
+}
+
+cudaError_t GridGpu::transferData(complexVector &kData)
+{
+    cudaMemcpy(m_d_kData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
+    return cudaGetLastError();
 }
 
 cudaError_t GridGpu::retrieveData(complexVector &gData)

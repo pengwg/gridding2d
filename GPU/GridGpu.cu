@@ -114,10 +114,8 @@ cudaError_t GridGpu::copyKernelData()
 }
 
 
-cudaError_t GridGpu::kernelCall(complexVector &kData)
+cudaError_t GridGpu::kernelCall()
 {
-    cudaMemcpy(m_d_kData, kData.data(), kData.size() * sizeof(complexGpu), cudaMemcpyHostToDevice);
-
     dim3 GridSize(m_gpuGridSize, m_gpuGridSize);
     griddingKernel<<<GridSize, m_threadsPerBlock, m_sharedSize>>>(m_d_traj, m_d_kData, m_d_gData, m_gridSize);
 

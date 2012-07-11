@@ -135,7 +135,14 @@ int main(int argc, char *argv[])
     // GPU gridding
     timer.restart();
     for (int i = 0; i < rep; i++)
-        gridGpu.gridding(kData);
+        gridGpu.transferData(kData);
+
+    cudaDeviceSynchronize();
+    qWarning() << "\nGPU data transfer time =" << timer.elapsed() << "ms";
+
+    timer.restart();
+    for (int i = 0; i < rep; i++)
+        gridGpu.gridding();
 
     cudaDeviceSynchronize();
     qWarning() << "\nGPU gridding time =" << timer.elapsed() << "ms";
@@ -143,7 +150,7 @@ int main(int argc, char *argv[])
     timer.restart();
     for (int i = 0; i < rep; i++)
         gridGpu.retrieveData(gDataGpu);
-    qWarning() << "\nData retrive time =" << timer.elapsed() << "ms";
+    qWarning() << "\nGPU data retrive time =" << timer.elapsed() << "ms";
 
     // CPU FFT
     FFT2D fft(gridSize, gridSize, false);
