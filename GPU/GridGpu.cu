@@ -10,7 +10,7 @@
 __constant__ float Kernel[256];
 
 
-__global__ void griddingKernel(TrajGpu d_trajPoints, complexGpu *d_trajData, complexGpu *d_gData, int gridSize)
+__global__ void griddingKernel(TrajBlocksGpu d_trajBlocks, complexGpu *d_trajData, complexGpu *d_gData, int gridSize)
 {
     int blockWidth = ceilf((float)gridSize / gridDim.x);
     int blockHeight = ceilf((float)gridSize / gridDim.y);
@@ -36,10 +36,10 @@ __global__ void griddingKernel(TrajGpu d_trajPoints, complexGpu *d_trajData, com
     int klength = 256;
 
     int blockID = blockIdx.y * gridDim.x + blockIdx.x;
-    Traj *pTraj = (Traj *)((char *)d_trajPoints.trajPoints + d_trajPoints.pitchTraj * blockID);
+    TrajPoint *pTraj = (TrajPoint *)((char *)d_trajBlocks.trajPoints + d_trajBlocks.pitchTraj * blockID);
 
-    for (int i = threadIdx.x; i < d_trajPoints.trajWidth; i += blockDim.x) {
-        Traj traj = pTraj[i];
+    for (int i = threadIdx.x; i < d_trajBlocks.trajWidth; i += blockDim.x) {
+        TrajPoint traj = pTraj[i];
         if (traj.dcf == 0) break;
 
         float xCenter = (0.5f + traj.kx) * gridSize; // kx in (-0.5, 0.5)
@@ -114,7 +114,7 @@ cudaError_t GridGpu::copyKernelData()
 cudaError_t GridGpu::kernelCall()
 {
     dim3 GridSize(m_gpuGridSize, m_gpuGridSize);
-    griddingKernel<<<GridSize, m_threadsPerBlock, m_sharedSize>>>(m_d_traj, m_d_trajData, m_d_gData, m_gridSize);
+    griddingKernel<<<GridSize, m_threadsPerBlock, m_sharedSize>>>(m_d_trajBlocks, m_d_trajData, m_d_gData, m_gridSize);
 
     //std::complex<float> *p = gData.data();
     //qWarning() << p[0].real() << p[0].imag();

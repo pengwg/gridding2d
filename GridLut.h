@@ -2,17 +2,16 @@
 #define GRIDLUT_H
 
 #include <complex>
-#include <cuda_runtime.h>
 
 #include "ConvKernel.h"
 
-typedef struct __align__(16)
+typedef struct
 {
     float kx;
     float ky;
     float dcf;
     int idx;
-} Traj;
+} TrajPoint;
 
 typedef QVector< std::complex<float> > complexVector;
 
@@ -22,7 +21,7 @@ public:
     GridLut(int gridSize, ConvKernel &kernel);
     virtual ~GridLut();
 
-    virtual void gridding(QVector<Traj> &trajPoints, complexVector &trajData, complexVector &gData);
+    void gridding(QVector<TrajPoint> &trajPoints, complexVector &trajData, complexVector &gData);
 
 protected:
     ConvKernel m_kernel;

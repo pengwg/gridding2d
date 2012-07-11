@@ -14,40 +14,40 @@
 #include "FFT2D.h"
 #include "FFTGpu.h"
 
-void loadData(QVector<Traj> &trajData, complexVector &kData, int kSize)
+void loadData(QVector<TrajPoint> &TrajPoints, complexVector &TrajData, int TrajSize)
 {
     QFile file("liver.trj");
     file.open(QIODevice::ReadOnly);
 
-    QVector<float> buffer(kSize * 3);
+    QVector<float> buffer(TrajSize * 3);
 
-    qint64 size = sizeof(float) * kSize * 3;
+    qint64 size = sizeof(float) * TrajSize * 3;
     auto count = file.read((char *)buffer.data(), size);
     Q_ASSERT(count == size);
 
     file.close();
 
     float *pdata = buffer.data();
-    for (int i = 0; i < kSize; i++) {
-        trajData[i].kx = pdata[0];
-        trajData[i].ky = pdata[1];
-        trajData[i].dcf = pdata[2];
-        trajData[i].idx = i;
+    for (int i = 0; i < TrajSize; i++) {
+        TrajPoints[i].kx = pdata[0];
+        TrajPoints[i].ky = pdata[1];
+        TrajPoints[i].dcf = pdata[2];
+        TrajPoints[i].idx = i;
         pdata += 3;
     }
 
     file.setFileName("liver.0.data");
     file.open(QIODevice::ReadOnly);
 
-    size = sizeof(float) * kSize * 2;
+    size = sizeof(float) * TrajSize * 2;
     count = file.read((char *)buffer.data(), size);
     Q_ASSERT(count == size);
 
     file.close();
 
     pdata = buffer.data();
-    for (int i = 0; i < kSize; i++) {
-        kData[i] = std::complex<float> (pdata[0], pdata[1]);
+    for (int i = 0; i < TrajSize; i++) {
+        TrajData[i] = std::complex<float> (pdata[0], pdata[1]);
         pdata += 2;
     }
 }
@@ -105,10 +105,10 @@ int main(int argc, char *argv[])
     int arms = 16;
     QDir::setCurrent("../k-export-liver/");
 
-    QVector<Traj> trajData(samples * arms);
-    complexVector kData(samples * arms);
+    QVector<TrajPoint> TrajPoints(samples * arms);
+    complexVector TrajData(samples * arms);
 
-    loadData(trajData, kData, samples * arms);
+    loadData(TrajPoints, TrajData, samples * arms);
 
     int kWidth = 4;
     int overGridFactor = 2;
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
     QElapsedTimer timer;
 
     GridGpu gridGpu(gridSize, kernel);
-    gridGpu.prepareGPU(trajData);
+    gridGpu.prepareGPU(TrajPoints);
 
     int rep = 100;
     qWarning() << "\nIteration" << rep << 'x';
@@ -129,13 +129,13 @@ int main(int argc, char *argv[])
     GridLut gridCpu(gridSize, kernel);
     timer.start();
     for (int i = 0; i < rep; i++)
-        gridCpu.gridding(trajData, kData, gDataCpu);
+        gridCpu.gridding(TrajPoints, TrajData, gDataCpu);
     qWarning() << "\nCPU gridding time =" << timer.elapsed() << "ms";
 
     // GPU gridding
     timer.restart();
     for (int i = 0; i < rep; i++)
-        gridGpu.transferData(kData);
+        gridGpu.transferData(TrajData);
 
     cudaDeviceSynchronize();
     qWarning() << "\nGPU data transfer time =" << timer.elapsed() << "ms";

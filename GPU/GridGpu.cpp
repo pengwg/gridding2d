@@ -7,13 +7,13 @@ GridGpu::GridGpu(int gridSize, ConvKernel &kernel)
     : GridLut(gridSize, kernel), m_threadsPerBlock(256), m_gpuGridSize(16),
       m_d_trajData(nullptr), m_d_gData(nullptr), m_trajBlocks(m_gpuGridSize * m_gpuGridSize)
 {
-    m_d_traj.trajPoints = nullptr;
+    m_d_trajBlocks.trajPoints = nullptr;
 }
 
 GridGpu::~GridGpu()
 {
-    if (m_d_traj.trajPoints)
-        cudaFree(m_d_traj.trajPoints);
+    if (m_d_trajBlocks.trajPoints)
+        cudaFree(m_d_trajBlocks.trajPoints);
 
     if (m_d_trajData)
         cudaFree(m_d_trajData);
@@ -22,7 +22,7 @@ GridGpu::~GridGpu()
         cudaFree(m_d_gData);
 }
 
-void GridGpu::gridding(QVector<Traj> &trajPoints, complexVector &trajData, complexVector &gData)
+void GridGpu::gridding(QVector<TrajPoint> &trajPoints, complexVector &trajData, complexVector &gData)
 {
     prepareGPU(trajPoints);
     gridding(trajData);
@@ -47,7 +47,7 @@ void GridGpu::gridding()
         qWarning() << cudaGetErrorString(status);
 }
 
-void GridGpu::createTrajBlocks(QVector<Traj> &trajPoints)
+void GridGpu::createTrajBlocks(QVector<TrajPoint> &trajPoints)
 {
     float kBlockSize = ceilf((float)m_gridSize / m_gpuGridSize);
 
@@ -55,13 +55,16 @@ void GridGpu::createTrajBlocks(QVector<Traj> &trajPoints)
     float kHW = m_kernel.getKernelWidth() / 2;
 
     for (auto &traj : trajPoints) {
+        TrajPointGpu trajGpu;
+        trajGpu.trajPoint = traj;
+
         int blockX = ((traj.kx + 0.5) * m_gridSize) / kBlockSize;
         Q_ASSERT(blockX < m_gpuGridSize);
 
         int blockY = (traj.ky + 0.5) * m_gridSize / kBlockSize;
         Q_ASSERT(blockY < m_gpuGridSize);
 
-        m_trajBlocks[blockY * m_gpuGridSize + blockX].append(traj);
+        m_trajBlocks[blockY * m_gpuGridSize + blockX].append(trajGpu);
 
         int lbx = ((traj.kx + 0.5) * m_gridSize - kHW) / kBlockSize;
         int ubx = ((traj.kx + 0.5) * m_gridSize + kHW) / kBlockSize;
@@ -69,27 +72,27 @@ void GridGpu::createTrajBlocks(QVector<Traj> &trajPoints)
         int uby = ((traj.ky + 0.5) * m_gridSize + kHW) / kBlockSize;
 
         if (lbx == blockX - 1 && lbx >= 0) {
-            m_trajBlocks[blockY * m_gpuGridSize + lbx].append(traj);
+            m_trajBlocks[blockY * m_gpuGridSize + lbx].append(trajGpu);
             if (lby == blockY - 1 && lby >= 0) {
-                m_trajBlocks[lby * m_gpuGridSize + lbx].append(traj);
-                // qWarning() << traj.kx << traj.ky;
+                m_trajBlocks[lby * m_gpuGridSize + lbx].append(trajGpu);
+                // qWarning() << trajGpu.kx << trajGpu.ky;
             }
             if (uby == blockY + 1 && uby < m_gpuGridSize)
-                m_trajBlocks[uby * m_gpuGridSize + lbx].append(traj);
+                m_trajBlocks[uby * m_gpuGridSize + lbx].append(trajGpu);
         }
 
         if (ubx == blockX + 1 && ubx < m_gpuGridSize) {
-            m_trajBlocks[blockY * m_gpuGridSize + ubx].append(traj);
+            m_trajBlocks[blockY * m_gpuGridSize + ubx].append(trajGpu);
             if (lby == blockY - 1 && lby >= 0)
-                m_trajBlocks[lby * m_gpuGridSize + ubx].append(traj);
+                m_trajBlocks[lby * m_gpuGridSize + ubx].append(trajGpu);
             if (uby == blockY + 1 && uby < m_gpuGridSize)
-                m_trajBlocks[uby * m_gpuGridSize + ubx].append(traj);
+                m_trajBlocks[uby * m_gpuGridSize + ubx].append(trajGpu);
         }
 
         if (lby == blockY - 1 && lby >= 0)
-            m_trajBlocks[lby * m_gpuGridSize + blockX].append(traj);
+            m_trajBlocks[lby * m_gpuGridSize + blockX].append(trajGpu);
         if (uby == blockY + 1 && uby < m_gpuGridSize)
-            m_trajBlocks[uby * m_gpuGridSize + blockX].append(traj);
+            m_trajBlocks[uby * m_gpuGridSize + blockX].append(trajGpu);
     }
 
     m_kSize = trajPoints.size();
@@ -103,15 +106,15 @@ cudaError_t GridGpu::copyTrajBlocks()
     for (int i = 0; i < m_trajBlocks.size(); i++) {
         if (m_trajBlocks[i].size() > maxP) maxP = m_trajBlocks[i].size();
     }
-    m_d_traj.trajWidth = maxP;
+    m_d_trajBlocks.trajWidth = maxP;
 
-    cudaMallocPitch(&m_d_traj.trajPoints, &m_d_traj.pitchTraj, maxP * sizeof(Traj), m_trajBlocks.size());
-    cudaMemset(m_d_traj.trajPoints, 0, m_d_traj.pitchTraj * m_trajBlocks.size());
+    cudaMallocPitch(&m_d_trajBlocks.trajPoints, &m_d_trajBlocks.pitchTraj, maxP * sizeof(TrajPointGpu), m_trajBlocks.size());
+    cudaMemset(m_d_trajBlocks.trajPoints, 0, m_d_trajBlocks.pitchTraj * m_trajBlocks.size());
     qWarning() << "Max traj points per block:" << maxP;
 
     for (int i = 0; i < m_trajBlocks.size(); i++) {
-        char *row = (char *)m_d_traj.trajPoints + i * m_d_traj.pitchTraj;
-        cudaMemcpy(row, m_trajBlocks[i].data(), m_trajBlocks[i].size() * sizeof(Traj), cudaMemcpyHostToDevice);
+        char *row = (char *)m_d_trajBlocks.trajPoints + i * m_d_trajBlocks.pitchTraj;
+        cudaMemcpy(row, m_trajBlocks[i].data(), m_trajBlocks[i].size() * sizeof(TrajPointGpu), cudaMemcpyHostToDevice);
     }
 
     return cudaGetLastError();
@@ -128,7 +131,7 @@ cudaError_t GridGpu::mallocGpu()
     return cudaGetLastError();
 }
 
-cudaError_t GridGpu::prepareGPU(QVector<Traj> &trajPoints)
+cudaError_t GridGpu::prepareGPU(QVector<TrajPoint> &trajPoints)
 {
     createTrajBlocks(trajPoints);
     copyKernelData();

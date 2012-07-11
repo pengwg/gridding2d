@@ -14,7 +14,7 @@ GridLut::~GridLut()
 
 }
 
-void GridLut::gridding(QVector<Traj> &trajPoints, complexVector &trajData, complexVector &gData)
+void GridLut::gridding(QVector<TrajPoint> &trajPoints, complexVector &trajData, complexVector &gData)
 {
     gData.resize(m_gridSize * m_gridSize);
 

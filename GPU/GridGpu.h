@@ -2,12 +2,18 @@
 #define GRIDGPU_H
 
 #include "GridLut.h"
+#include <cuda_runtime.h>
+
+typedef struct __align__(16)
+{
+    TrajPoint trajPoint;
+} TrajPointGpu;
 
 typedef struct {
-    Traj*  trajPoints;
+    TrajPointGpu*  trajPoints;
     size_t pitchTraj;
     int trajWidth;
-} TrajGpu;
+} TrajBlocksGpu;
 
 typedef struct __align__(8) {
     float real;
@@ -20,17 +26,17 @@ public:
     GridGpu(int gridSize, ConvKernel &kernel);
     ~GridGpu();
 
-    void gridding(QVector<Traj> &trajPoints, complexVector &trajData, complexVector &gData);
+    void gridding(QVector<TrajPoint> &trajPoints, complexVector &trajData, complexVector &gData);
     void gridding(complexVector &trajData);
     void gridding();
 
-    cudaError_t prepareGPU(QVector<Traj> &trajPoints);
+    cudaError_t prepareGPU(QVector<TrajPoint> &trajPoints);
     cudaError_t transferData(complexVector &trajData);
     cudaError_t retrieveData(complexVector &gData);
     complexGpu *getDevicePointer() { return m_d_gData; }
 
 private:
-    void createTrajBlocks(QVector<Traj> &trajPoints);
+    void createTrajBlocks(QVector<TrajPoint> &trajPoints);
     cudaError_t copyKernelData();
     cudaError_t copyTrajBlocks();
     cudaError_t mallocGpu();
@@ -38,10 +44,10 @@ private:
 
     const int m_threadsPerBlock;
     const int m_gpuGridSize;
-    QVector< QVector<Traj> > m_trajBlocks;
+    QVector< QVector<TrajPointGpu> > m_trajBlocks;
     int m_kSize;
 
-    TrajGpu m_d_traj;
+    TrajBlocksGpu m_d_trajBlocks;
     complexGpu *m_d_trajData;
     complexGpu *m_d_gData;
     int m_sharedSize;
