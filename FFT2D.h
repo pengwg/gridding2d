@@ -7,7 +7,6 @@
 
 typedef QVector< std::complex<float> > complexVector;
 
-
 class FFT2D
 {
 public:

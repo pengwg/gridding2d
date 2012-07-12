@@ -36,10 +36,10 @@ __global__ void griddingKernel(TrajBlocksGpu d_trajBlocks, complexGpu *d_trajDat
     int klength = 256;
 
     int blockID = blockIdx.y * gridDim.x + blockIdx.x;
-    TrajPoint *pTraj = (TrajPoint *)((char *)d_trajBlocks.trajPoints + d_trajBlocks.pitchTraj * blockID);
+    TrajPointGpu *d_traj = (TrajPointGpu *)((char *)d_trajBlocks.trajPoints + d_trajBlocks.pitchTraj * blockID);
 
     for (int i = threadIdx.x; i < d_trajBlocks.trajWidth; i += blockDim.x) {
-        TrajPoint traj = pTraj[i];
+        TrajPoint traj = d_traj[i].trajPoint;
         if (traj.dcf == 0) break;
 
         float xCenter = (0.5f + traj.kx) * gridSize; // kx in (-0.5, 0.5)

@@ -1,9 +1,9 @@
 #ifndef FFTGPU_H
 #define FFTGPU_H
 
+#include <cuda_runtime.h>
 #include <cufft.h>
-
-#include "GridGpu.h"
+#include "FFT2D.h"
 
 class FFTGpu
 {

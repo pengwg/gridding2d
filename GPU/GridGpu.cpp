@@ -55,14 +55,14 @@ void GridGpu::createTrajBlocks(QVector<TrajPoint> &trajPoints)
     float kHW = m_kernel.getKernelWidth() / 2;
 
     for (auto &traj : trajPoints) {
-        TrajPointGpu trajGpu;
-        trajGpu.trajPoint = traj;
-
         int blockX = ((traj.kx + 0.5) * m_gridSize) / kBlockSize;
         Q_ASSERT(blockX < m_gpuGridSize);
 
         int blockY = (traj.ky + 0.5) * m_gridSize / kBlockSize;
         Q_ASSERT(blockY < m_gpuGridSize);
+
+        TrajPointGpu trajGpu;
+        trajGpu.trajPoint = traj;
 
         m_trajBlocks[blockY * m_gpuGridSize + blockX].append(trajGpu);
 
