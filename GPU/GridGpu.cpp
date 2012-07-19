@@ -137,6 +137,7 @@ cudaError_t GridGpu::prepareGPU(QVector<TrajPoint> &trajPoints)
     copyKernelData();
     copyTrajBlocks();
     mallocGpu();
+    cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
     m_sharedSize = powf(ceilf((float)m_gridSize / m_gpuGridSize), 2) * sizeof(complexGpu);
     qWarning() << "Shared mem size:" << m_sharedSize;
