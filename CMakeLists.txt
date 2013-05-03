@@ -21,6 +21,8 @@ set(SRC_FILES
 )
 
 find_package(CUDA REQUIRED)
+set(CUDA_HOST_COMPILER /usr/bin/gcc-4.6)
+
 include_directories(
     ${FFTW3_INCLUDE_DIR}
     ${CUDA_INCLUDE_DIRS}
