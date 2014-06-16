@@ -2,7 +2,7 @@ project(Gridding2D)
 
 cmake_minimum_required(VERSION 2.6.0)
 
-add_definitions( -std=c++0x )
+add_definitions( -std=c++11 )
 
 # set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_BUILD_TYPE Release)
@@ -21,7 +21,6 @@ set(SRC_FILES
 )
 
 find_package(CUDA REQUIRED)
-set(CUDA_HOST_COMPILER /usr/bin/g++-4.6)
 
 include_directories(
     ${FFTW3_INCLUDE_DIR}
