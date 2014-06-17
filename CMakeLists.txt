@@ -1,14 +1,11 @@
 project(Gridding2D)
 
-cmake_minimum_required(VERSION 2.6.0)
+cmake_minimum_required(VERSION 2.8.9)
 
 add_definitions( -std=c++11 )
 
-# set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_BUILD_TYPE Release)
-
+find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
-include_directories(${Qt5Widgets_INCLUDE_DIRS})
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(FFTW3 COMPONENTS single REQUIRED)
@@ -32,5 +29,5 @@ include_directories(
 
 add_subdirectory(GPU)
 add_executable(gridding ${SRC_FILES})
-target_link_libraries(gridding gridGpu ${Qt5Widgets_LIBRARIES} gsl blas ${FFTW3_LIBRARIES})
-
+target_link_libraries(gridding gridGpu gsl blas ${FFTW3_LIBRARIES})
+qt5_use_modules(gridding Core Widgets)

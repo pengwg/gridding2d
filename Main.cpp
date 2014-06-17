@@ -2,7 +2,7 @@
 #include <QDir>
 #include <QFile>
 #include <QDebug>
-#include <QtGui/QApplication>
+#include <QApplication>
 #include <QLabel>
 #include <QElapsedTimer>
 
